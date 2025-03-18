@@ -4,12 +4,12 @@ from dotenv import load_dotenv
 import os
 
 load_dotenv()
-
+#github testing
 username = os.getenv("RIT_USERNAME")
 password = os.getenv("RIT_PASSWORD")
 dbName = 'p32001_23'
-
-
+#testing git
+#testing git
 try:
     with SSHTunnelForwarder(('starbug.cs.rit.edu', 22),
                             ssh_username=username,
