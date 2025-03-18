@@ -5,8 +5,8 @@ import os
 
 load_dotenv()
 
-username = os.getenv("NAME")
-password = os.getenv("PASS")
+username = os.getenv("RIT_USERNAME")
+password = os.getenv("RIT_PASSWORD")
 dbName = 'p32001_23'
 
 
