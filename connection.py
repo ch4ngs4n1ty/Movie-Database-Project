@@ -2,6 +2,7 @@ import psycopg
 from sshtunnel import SSHTunnelForwarder
 from dotenv import load_dotenv
 import os
+import movies_app
 
 load_dotenv()
 #github testing
@@ -31,6 +32,7 @@ try:
         print("Database connection established")
 
         #DB work here....
+        movies_app.main(conn, curs)
 
         conn.close()
         print("Database connection closed.")
