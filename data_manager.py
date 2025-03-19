@@ -13,13 +13,14 @@ https://www.psycopg.org/docs/cursor.html - example for execute many
 https://www.psycopg.org/docs/usage.html - example for execute
 """
 from faker import Faker
+from psycopg import Cursor, Connection
 import random
 
 msg1 = '✅ Running modify_database..........................[1/3]'
 msg2 = '✅ Data created.....................................[2/3]'
 msg3 = '✅ Update successful................................[3/3]'
 
-def create_data(curs, conn, quantity: int) -> tuple[tuple[str, str]]:
+def create_data(curs, conn, quantity: int) -> list[tuple[str, str]]:
     fake = Faker()
 
     tuples = []
@@ -33,7 +34,7 @@ def create_data(curs, conn, quantity: int) -> tuple[tuple[str, str]]:
         tuples.append(t)
     return tuples
 
-def modify_database(curs: object, conn: object) -> None:
+def modify_database(curs: Cursor, conn: Connection) -> None:
     print(msg1)
     tuples = create_data(curs, conn, 5000)
     print(msg2)
