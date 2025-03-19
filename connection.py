@@ -1,16 +1,28 @@
+'''
+connection.py
+
+This script establishes a connection to the database and calls functions from
+other files to update the database if needed or to run an application.
+'''
+import os
 import psycopg
 from sshtunnel import SSHTunnelForwarder
 from dotenv import load_dotenv
+
+'''
+This script is used to make changes to the database.
+Remove it after data is populated into the database.
+'''
+import data_manager
 import os
 import movies_app
 
 load_dotenv()
-#github testing
+
 username = os.getenv("RIT_USERNAME")
 password = os.getenv("RIT_PASSWORD")
 dbName = 'p32001_23'
-#testing git
-#testing git
+
 try:
     with SSHTunnelForwarder(('starbug.cs.rit.edu', 22),
                             ssh_username=username,
@@ -32,6 +44,7 @@ try:
         print("Database connection established")
 
         #DB work here....
+        data_manager.modify_database(curs, conn)
         movies_app.main(conn, curs)
 
         conn.close()
