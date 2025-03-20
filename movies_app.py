@@ -113,6 +113,8 @@ def login():
         print("Invalid username or password!")
 
 def follow():
+
+
     pass
 
 def unfollow():
@@ -142,8 +144,34 @@ def delete_collection():
 def view_collections():
     pass
 
+#user will be able to create collection of movies
 def create_collection():
-    pass
+
+    #checks if the user is logged in
+    user_id = user_session["userid"]
+
+    if not user_id:
+        
+        print("Need to be logged in to create a new collection")
+        return
+
+    new_collection = input("Input the name of your new collection: ")
+    collection_name = new_collection.strip()
+
+    try:
+        
+        #relational table is Collection(CollectionName, UserID)
+        curs.execute("INSERT INTO Collection(collectionname, userid) VALUES (%s, %s)", (collection_name, user_id))
+
+        conn.commit()
+
+        print(f"Collection '{collection_name}' has been created!")
+
+    except Exception as e:
+
+        print("Error occured when attempting to create collection:", e)
+        conn.rollback()
 
 def name_collection():
     pass
+
