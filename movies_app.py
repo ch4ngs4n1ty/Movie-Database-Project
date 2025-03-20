@@ -101,6 +101,7 @@ def login():
 
         access_date = datetime.datetime.now()
 
+        #relational table is AccessDate(UserID, AccessDate)
         curs.execute("IN users SET AccessDate(userid, accessdate) VALUES (%s, %s)" , (user[0], access_date))
 
         conn.commit()
