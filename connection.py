@@ -25,15 +25,15 @@ try:
     with SSHTunnelForwarder(('starbug.cs.rit.edu', 22),
                             ssh_username=username,
                             ssh_password=password,
-                            remote_bind_address=('127.0.0.1', 5432)) as server:
-        server.start()
+                            remote_bind_address=('127.0.0.1', 5432)) as server: 
+        server.start()  # type: ignore
         print("SSH tunnel established")
         params = {
             'dbname': dbName,
             'user': username,
             'password': password,
             'host': 'localhost',
-            'port': server.local_bind_port
+            'port': server.local_bind_port  # type: ignore
         }
 
 
