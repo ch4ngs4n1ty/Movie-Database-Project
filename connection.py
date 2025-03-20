@@ -14,6 +14,8 @@ This script is used to make changes to the database.
 Remove it after data is populated into the database.
 '''
 import data_manager
+import os
+import movies_app
 
 load_dotenv()
 
@@ -43,6 +45,7 @@ try:
 
         #DB work here....
         data_manager.modify_database(curs, conn)
+        movies_app.main(conn, curs)
 
         conn.close()
         print("Database connection closed.")
