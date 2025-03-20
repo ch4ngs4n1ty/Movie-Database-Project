@@ -9,11 +9,7 @@ import psycopg
 from sshtunnel import SSHTunnelForwarder
 from dotenv import load_dotenv
 
-'''
-This script is used to make changes to the database.
-Remove it after data is populated into the database.
-'''
-import data_manager
+import movies_app
 
 load_dotenv()
 
@@ -36,13 +32,12 @@ try:
             'port': server.local_bind_port  # type: ignore
         }
 
-
         conn = psycopg.connect(**params)
         curs = conn.cursor()
         print("Database connection established")
 
         #DB work here....
-        data_manager.modify_database(curs, conn)
+        movies_app.main(conn, curs)
 
         conn.close()
         print("Database connection closed.")
