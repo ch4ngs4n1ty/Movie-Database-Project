@@ -31,12 +31,12 @@ def main(cursor, connection):
             while user_session["loggedIn"]:
                 command = input("Enter a command:\n")
                 if command == "logout":
-                    logged_in = False
-                    userid = ""
-                    userIndex = []
-                    followers = 0
-                    following = 0
-                    collections = 0
+                    user_session["logged_in"] = False
+                    user_session["userid"] = ""
+                    user_session["userIndex"] = []
+                    user_session["followers"] = 0
+                    user_session["following"] = 0
+                    user_session["collections"] = 0
                     print("Logged out")
                 elif command == "follow":
                     follow()
