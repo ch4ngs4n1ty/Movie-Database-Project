@@ -9,10 +9,6 @@ import psycopg
 from sshtunnel import SSHTunnelForwarder
 from dotenv import load_dotenv
 
-'''
-This script is used to make changes to the database.
-Remove it after data is populated into the database.
-'''
 import movies_app
 
 load_dotenv()
