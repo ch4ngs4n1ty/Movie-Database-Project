@@ -77,7 +77,7 @@ def create_account():
     email = input("Email address: ")
     creation_date = datetime.datetime.now()
     try:
-        curs.execute("INSERT INTO users(userid, username, firstname, lastname, region, dob, creationdate) VALUES (%s, %s, %s, %s, %s,%s, %s)", (uid, email, username, password, firstname, lastname, creation_date))
+        curs.execute("INSERT INTO users(userid, username, firstname, lastname, region, dob, password, creationdate) VALUES (%s, %s, %s, %s, %s,%s, %s)", (uid, email, username, password, firstname, lastname, password, creation_date))
         print("Account has been created \n")
         login()
     except Exception as e:
@@ -85,7 +85,31 @@ def create_account():
         conn.rollback()
 
 def login():
-    pass
+
+    username = input("Username: ")
+    password = input("Password: ")
+
+    #selects only userid, username, and password 
+    curs.execute("SELECT userid, username, password FROM users WHERE username = %s", (username,)) 
+
+    #search for user with the provided username
+    #user = (userid, username, password)
+    user = curs.fetchone() 
+
+    #checks if user exists and user's password equals to inputted password
+    if user and user[2] == password: 
+
+        access_date = datetime.datetime.now()
+
+        curs.execute("IN users SET AccessDate(userid, accessdate) VALUES (%s, %s)" , (user[0], access_date))
+
+        conn.commit()
+
+        print(f"Hello, {username}!")
+
+    else: 
+
+        print("Invalid username or password!")
 
 def follow():
     pass
