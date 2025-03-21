@@ -93,14 +93,17 @@ def create_account():
         password = input("Password: ").strip()
         firstname = input("First Name: ").strip()
         lastname = input("Last Name: ").strip()
+        region = input("RegionL ").strip()
+        dob = input("Date of birth(YYYY-MM-DD): ").strip()
         email = input("Email address: ").strip()
         creation_date = datetime.datetime.now()
         
         # adds the users account to users
-        curs.execute("INSERT INTO users(userid, username, firstname, lastname, password, creationdate) VALUES (%s, %s, %s, %s, %s, %s)", (uid, username, firstname, lastname, password, creation_date))
+        curs.execute("INSERT INTO users(userid, username, firstname, lastname, region, dob, password, creationdate) VALUES (%s, %s, %s, %s, %s, %s, %s, %s)",
+                     (uid, username, firstname, lastname, region, dob, password, creation_date))
+        conn.commit()
         print("Account has been created \n")
         login()
-        conn.commit()
         
     except Exception as e:
         
