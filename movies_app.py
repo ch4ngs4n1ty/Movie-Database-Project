@@ -266,9 +266,7 @@ def watch_movie():
         
         print("Error watching movie")
         conn.rollback()
-        
-        
-
+    
 def watch_collection():
     
     print("Watch a collection")
@@ -476,7 +474,72 @@ def add_to_collection():
         conn.rollback()
 
 def remove_from_collection():
-    pass
+
+    print("Removing a movie from your collection")
+
+    try:
+        user_id = user_session["userId"]
+
+        # collection(collectionid, collectionname, userid)
+        curs.execute("""SELECT CollectionID, CollectionName
+                        FROM Collection
+                        WHERE UserID = %s""", (user_id,))
+        
+        collection_list = curs.fetchall()
+
+        if not collection_list:
+            print("You currently have no collections right now.")
+            return
+
+        print("Your Collections: ")
+        for collection in collection_list:
+            print(f"ID: {collection[0]}, Collection Name: {collection[1]}")
+
+        collection_index = int(input("Select Collection ID: ").strip()) - 1
+
+        if collection_index < 0 or collection_index >= len(collection_list):
+            print("Invalid selection for collection")
+            return
+        
+        collection_id = collection_list[collection_index][0]
+        collection_name = collection_list[collection_index][1]
+
+        movie_name = input("Input the Movie Name to remove: ").strip()
+
+        curs.execute("""SELECT MovieID
+                        FROM Movie
+                        WHERE MovieName = %s""", (movie_name,))
+        
+        movie = curs.fetchone()
+
+        if not movie:
+            print("Movie is not found in database")
+            return
+        
+        movie_id = movie[0]
+
+        # Check if the movie exists in the collection
+        curs.execute("""SELECT *
+                        FROM PartOf 
+                        WHERE CollectionID = %s AND MovieID = %s""", (collection_id, movie_id))
+        
+        movie_in_collection = curs.fetchone()
+
+        if not movie_in_collection:
+            print(f"'{movie_name}' is not in the collection '{collection_name}'")
+            return
+
+        # If movie exists in the collection, remove it
+        curs.execute("""DELETE FROM PartOf
+                        WHERE CollectionID = %s AND MovieID = %s""", (collection_id, movie_id))
+
+        conn.commit()
+
+        print(f"Successfully removed '{movie_name}' from '{collection_name}'")
+
+    except Exception as e:
+        print("Error removing movie from collection:", e)
+        conn.rollback()
 
 def delete_collection():
     pass
@@ -507,7 +570,7 @@ def view_collections():
         num_movies = collect[1]
         total_length = collect[2]
 
-        print("Collection Name: '{name}'  Number Of Movies: '{num_movies}' Total Length Of Movies In Collection: '{total_length}'")
+        print(f"Collection Name: '{name}'  Number Of Movies: '{num_movies}' Total Length Of Movies In Collection: '{total_length}'")
 
 #user will be able to create collection of movies
 def create_collection():
