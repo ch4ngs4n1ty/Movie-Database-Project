@@ -197,7 +197,7 @@ def follow():
     try:
         
         # gets userid from email table
-        curs.execute("SELECT userid FROM email WHERE email = %s", user_email)
+        curs.execute("SELECT userid FROM email WHERE email = %s", (user_email,))
         user_id = curs.fetchone()
         
         if not user_id:
@@ -207,8 +207,17 @@ def follow():
         
         followed_id = user_id[0]
         
+        # Check if the user is already being followed
+        curs.execute("SELECT 1 FROM follows WHERE follower = %s AND followee = %s", (user_session["userId"], followed_id))
+        existing_follow = curs.fetchone()
+
+        if existing_follow:
+        
+            print(f"You are already following {user_email}")
+            return
+        
         # gets username of the userid from users table
-        curs.execute("SELECT username FROM users WHERE userid = %s", (followed_id))
+        curs.execute("SELECT username FROM users WHERE userid = %s", (followed_id,))
         user_data = curs.fetchone()
         
         if not user_data:
@@ -217,7 +226,7 @@ def follow():
             return
         
         followed_username = user_data[0]
-        curs.execute("INSERT INTO follows VALUES (%s, %s)", user_session["userId"], followed_id)
+        curs.execute("INSERT INTO follows VALUES (%s, %s)", (user_session["userId"], followed_id))
         conn.commit()
         print(f"You are following {followed_username}")
         
@@ -234,7 +243,7 @@ def unfollow():
     try:
         
         # gets userid 
-        curs.execute("SELECT userid FROM email WHERE email = %s", user_email)
+        curs.execute("SELECT userid FROM email WHERE email = %s", (user_email,))
         user_id = curs.fetchone()
         
         if not user_id:
@@ -243,6 +252,15 @@ def unfollow():
             return
         
         followed_id = user_id[0]
+        
+        # Check if the user is already being followed
+        curs.execute("SELECT 1 FROM follows WHERE follower = %s AND followee = %s", (user_session["userId"], followed_id))
+        existing_follow = curs.fetchone()
+
+        if not existing_follow:
+        
+            print(f"You are not following {user_email}")
+            return
         
         # gets username of the userid from users table
         curs.execute("SELECT * FROM follows WHERE follower = %s AND followee = %s", (user_session["userId"], followed_id))
@@ -253,16 +271,25 @@ def unfollow():
             print("User data missing")
             return
         
-        followed_username = user_data[0]
+        # Get the followed user's username
+        curs.execute("SELECT username FROM users WHERE userid = %s", (followed_id,))
+        followed_user = curs.fetchone()
+        
+        if not followed_user:
+        
+            print("Followed user not found")
+            return
+        
+        followed_username = followed_user[0]
         
         # delete follower, followee relation from follows
-        curs.execute("DELETE FROM follows WHERE follower = %s AND followee = %s", user_session["userId"], followed_id)
+        curs.execute("DELETE FROM follows WHERE follower = %s AND followee = %s", (user_session["userId"], followed_id))
         conn.commit()
         print(f"You unfollowed {followed_username}")
         
     except Exception as e:
         
-        print("Error following user")
+        print("Error unfollowing user")
         conn.rollback()
 
 def watch_movie():
