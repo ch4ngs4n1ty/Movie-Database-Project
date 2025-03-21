@@ -10,8 +10,6 @@ user_session = {
     "following": 0,
     "collections": 0
     }
-curs = None
-conn = None
 
 def main(cursor, connection):
     
@@ -73,42 +71,27 @@ def main(cursor, connection):
                     delete_collection()
                 elif command == "view collections":
                     view_collections()
-                elif command == "create collection":
+                elif command == "create_collection":
                     create_collection()
-                elif command == "name collection":
+                elif command == "name_collection":
                     name_collection()
                 else:
                     print("Invalid command")
                     help()
 
-def help():
-    print("logout - logout of account")
-    print("follow - follow a user")
-    print("unfollow - unfollow a user")
-    print("watch movie - watch a mmovie")
-    print("watch collection - watch a collection")
-    print("rate - rate a movie")
-    print("search - search for a movie or user")
-    print("add - add a movie to a collection")
-    print("remove - remove a movie from a collection")
-    print("delete - delete a movie from a collection")
-    print("view collections - view all collections")
-    print("create collection - create a collection")
-    print("name collection - name a collection")
-    
 def create_account():
     
     try:
         
         # gets the next available userId from users
-        curs.execute("SELECT COALESCE(MAX(CAST(SUBSTRING(userId FROM 2) as INTEGER)), 0) + 1 FROM users")
+        curs.execute("SELECT COALESCE(MAX(CAST(SUBSTRING(userId, 2) as INTEGER)), 0) + 1 FROM users")
         new_id = curs.fetchone()[0]
         uid = f"u{new_id}"
         username = input("Username: ").strip()
         password = input("Password: ").strip()
         firstname = input("First Name: ").strip()
         lastname = input("Last Name: ").strip()
-        region = input("Region: ").strip()
+        region = input("RegionL ").strip()
         dob = input("Date of birth(YYYY-MM-DD): ").strip()
         email = input("Email address: ").strip()
         creation_date = datetime.datetime.now()
@@ -116,10 +99,6 @@ def create_account():
         # adds the users account to users
         curs.execute("INSERT INTO users(userid, username, firstname, lastname, region, dob, password, creationdate) VALUES (%s, %s, %s, %s, %s, %s, %s, %s)",
                      (uid, username, firstname, lastname, region, dob, password, creation_date))
-        
-        # adds to email table
-        curs.execute("INSERT INTO email(userid, email) VALUES(%s, %s)", (uid, email))
-        
         conn.commit()
         print("Account has been created \n")
         login()
@@ -170,10 +149,7 @@ def login():
                 curs.execute("""
                     INSERT INTO accessdates(userid, accessdate)
                     VALUES (%s, %s)""", (user[0], access_date))
-            
-            user_session["userId"] = user[0]
-            user_session["username"] = user[1]
-            user_session["loggedIn"] = True
+                
             
             print(f"Hello, {username}!")
 
@@ -228,7 +204,7 @@ def follow():
         followed_username = user_data[0]
         curs.execute("INSERT INTO follows VALUES (%s, %s)", (user_session["userId"], followed_id))
         conn.commit()
-        print(f"You are following {followed_username}")
+        print(f"You are follwing {followed_username}")
         
     except Exception as e:
         
@@ -352,7 +328,7 @@ def watch_collection():
 def rate_movie():
     
     print("Rate movie")
-    movie_id = input("Enter movie ID: ")
+    movie_id = int(input("Enter movie ID: "))
     rating = round(float(input("Enter rating: ")))
     
     # gets the movie with the movieid
@@ -409,6 +385,40 @@ def search():
 
     val = f"%{search_value.lower()}" 
 
+    print("Sort Results By:")
+    print("1. Movie Name")
+    print("2. Studio")
+    print("3. Genre")
+    print("4. Release Date")
+
+    sort_by = input("Select (1 - 4): ").strip()
+
+    sort_options = {
+
+        "1": "m.title",
+        "2": "m.studio",
+        "3": "m.genre",
+        "4": "ro.releasedate"
+
+    }
+
+    if sort_by:
+
+        sort_order = input("Select order (ASC or DESC): ").strip()
+
+        if sort_order != "ASC" | "DESC":
+
+            print("Must either select ASC or DESC!")
+
+            return
+
+        sort_column = sort_options[sort_by]
+        selected_order = (f"ORDER BY {sort_column} {sort_order}")
+
+    else:
+
+        selected_order = "ORDER BY m.title ASC, ro.releasedate ASC"
+
     curs.execute("""SELECT m.title, 
                     mp.firstname,
                     mp.lastname,
@@ -426,7 +436,7 @@ def search():
                     LEFT JOIN ReleaseOn ro on m.movieid = ro.movieid
                     WHERE {selected_search} LIKE %s
                     GROUP BY m.movieid, mp.firstname, mp.lastname, d.firstname, d.lastname, m.duration, m.mpaarating
-                    ORDER BY m.title ASC, ro.releasedate ASC;""", (val,)) 
+                    ORDER BY {selected_order};""", (val,)) 
     
     result_list = curs.fetchall()
 
@@ -604,7 +614,6 @@ def delete_collection():
         curs.execute("SELECT * FROM collection WHERE collectionid = %s", collection_id)
         collection = curs.fetchone()
         
-        # checks if collection exists in collection table
         if not collection:
             print("Collection not found")
             return
@@ -710,30 +719,59 @@ def create_collection():
         conn.rollback()
 
 def name_collection():
-    
-    print("Rename a collection: ")
-    collection_id = input("Enter collection ID to rename: ").strip()
-    
-    curs.execute("SELECT * FROM collection WHERE collectionid = %s", collection_id)
-    collection = curs.fetchone()
-    
-    # check if collection exists in collection table
-    if not collection:
+
+    print("Modifying the name of a collection")
+
+    try: 
+
+        user_id = user_session["userId"]
+
+        curs.execute("SELECT collectionid, collectionname FROM collection where userid = %s", (user_id,))
+
+        collection_list = curs.fetchall()
+
+        if not collection_list:
+            
+            print("You have no collections right now")
+
+            return
         
-        print("Collection not found")
-        return
-    
-    new_name = input("Enter new name for collection: ").strip()
-    
-    try:
+        print("Your Collections: ")
         
-        # changes collectionname in collection to input
-        curs.execute("UPDATE collection SET collectionname = %s WHERE collectionid = %s", (new_name, collection_id))
+        for collection in collection_list:
+
+            print(f"ID: {collection[0]}, Collection Name: {collection[1]}")
+
+        collection_index = int(input("Select Collection ID to modify: ").strip()) - 1
+
+        if collection_index < 0 or collection_index >= len(collection_list):
+
+            print("Invalid selection for collection")
+
+            return
+        
+        collection_id = collection_list[collection_index][0]
+        collection_name = collection_list[collection_index][1]
+
+        new_collection_name = input(f"Current Collection Name: '{collection_name}'. Enter new name: ").strip()
+
+        if not new_collection_name:
+
+            print("Collection name cannot be empty")
+
+            return
+
+        curs.execute("""UPDATE Collection
+                        SET CollectionName = %s
+                        WHERE CollectionID = %s""", (new_collection_name, collection_id))
+
         conn.commit()
-        print(f"Renamed collection {collection_id} to {new_name}")
-        
+
+        print(f"Collection name successfully updated to '{new_collection_name}'.")
+
     except Exception as e:
         
-        print("Error renaming collection")
+        print("Error modifying collection name:", e)
         conn.rollback()
+        
 
