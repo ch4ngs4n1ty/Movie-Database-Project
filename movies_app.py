@@ -13,26 +13,37 @@ user_session = {
     }
 
 def main(cursor, connection):
+    
     global curs, conn
     curs = cursor
     conn = connection
     
     while True:
+        
         while not user_session["loggedIn"]:
+            
             command = input("Would you like to login or create an account?\n")
             if command == "create account":
+                
                 create_account()
                 user_session["loggedIn"] = True
+                
             if command == "login":
+                
                 login()
                 user_session["loggedIn"] = True
+                
             else:
+                
                 print("login - log into an account")
                 print("create account - create an account")
             
             while user_session["loggedIn"]:
+                
                 command = input("Enter a command:\n")
+                
                 if command == "logout":
+                    
                     user_session["logged_in"] = False
                     user_session["userid"] = ""
                     user_session["userIndex"] = []
@@ -40,6 +51,7 @@ def main(cursor, connection):
                     user_session["following"] = 0
                     user_session["collections"] = 0
                     print("Logged out")
+                    
                 elif command == "follow":
                     follow()
                 elif command == "unfollow":
@@ -70,7 +82,10 @@ def main(cursor, connection):
                     
 
 def create_account():
+    
     try:
+        
+        # gets the next available userId from users
         curs.execute("SELECT COALESCE(MAX(CAST(SUBSTRING(userId, 2) as INTEGER)), 0) + 1 FROM users")
         new_id = curs.fetchone()[0]
         uid = f"u{new_id}"
@@ -81,12 +96,15 @@ def create_account():
         email = input("Email address: ").strip()
         creation_date = datetime.datetime.now()
         
+        # adds the users account to users
         curs.execute("INSERT INTO users(userid, username, firstname, lastname, password, creationdate) VALUES (%s, %s, %s, %s, %s, %s)", (uid, username, firstname, lastname, password, creation_date))
         print("Account has been created \n")
         login()
         #conn.commit()
+        
     except Exception as e:
-        print("Error occurred", e)
+        
+        print("Error occurred creating account", e)
         conn.rollback()
 
 
