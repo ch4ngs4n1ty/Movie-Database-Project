@@ -92,7 +92,7 @@ def help():
     print("add - add a movie to a collection")
     print("remove - remove a movie from a collection")
     print("delete - delete a movie from a collection")
-    print("view collection - view a collection")
+    print("view collections - view all collections")
     print("create collection - create a collection")
     print("name collection - name a collection")
     
@@ -170,7 +170,10 @@ def login():
                 curs.execute("""
                     INSERT INTO accessdates(userid, accessdate)
                     VALUES (%s, %s)""", (user[0], access_date))
-                
+            
+            user_session["userId"] = user[0]
+            user_session["username"] = user[1]
+            user_session["loggedIn"] = True
             
             print(f"Hello, {username}!")
 
@@ -634,6 +637,7 @@ def create_collection():
     collection_name = new_collection.strip()
 
     user_id = user_session["userId"]
+    print(user_id)
 
     try:
         
