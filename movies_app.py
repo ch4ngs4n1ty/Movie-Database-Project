@@ -381,6 +381,8 @@ def search():
 
             print("Must either select ASC or DESC!")
 
+            return
+
         sort_column = sort_options[sort_by]
         selected_order = (f"ORDER BY {sort_column} {sort_order}")
 
@@ -689,6 +691,58 @@ def create_collection():
 
 def name_collection():
 
+    print("Modifying the name of a collection")
 
-    pass
+    try: 
+
+        user_id = user_session["userId"]
+
+        curs.execute("SELECT collectionid, collectionname FROM collection where userid = %s", (user_id,))
+
+        collection_list = curs.fetchall()
+
+        if not collection_list:
+            
+            print("You have no collections right now")
+
+            return
+        
+        print("Your Collections: ")
+        
+        for collection in collection_list:
+
+            print(f"ID: {collection[0]}, Collection Name: {collection[1]}")
+
+        collection_index = int(input("Select Collection ID to modify: ").strip()) - 1
+
+        if collection_index < 0 or collection_index >= len(collection_list):
+
+            print("Invalid selection for collection")
+
+            return
+        
+        collection_id = collection_list[collection_index][0]
+        collection_name = collection_list[collection_index][1]
+
+        new_collection_name = input(f"Current Collection Name: '{collection_name}'. Enter new name: ").strip()
+
+        if not new_collection_name:
+
+            print("Collection name cannot be empty")
+
+            return
+
+        curs.execute("""UPDATE Collection
+                        SET CollectionName = %s
+                        WHERE CollectionID = %s""", (new_collection_name, collection_id))
+
+        conn.commit()
+
+        print(f"Collection name successfully updated to '{new_collection_name}'.")
+
+    except Exception as e:
+        
+        print("Error modifying collection name:", e)
+        conn.rollback()
+        
 
