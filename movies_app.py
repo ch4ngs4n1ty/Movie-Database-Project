@@ -79,6 +79,25 @@ def main(cursor, connection):
                     print("Invalid command")
                     help()
 
+def help():
+    help_msg = \
+"""
+logout - logout of account
+follow - follow a user
+unfollow - unfollow a user
+watch movie - watch a mmovie
+watch collection - watch a collection
+rate - rate a movie
+search - search for a movie or user
+add - add a movie to a collection
+remove - remove a movie from a collection
+delete - delete a movie from a collection
+view collections - view all collections
+create collection - create a collection
+name collection - name a collection
+"""
+    print(help_msg)
+    
 def create_account():
     
     try:
@@ -150,8 +169,12 @@ def login():
                     INSERT INTO accessdates(userid, accessdate)
                     VALUES (%s, %s)""", (user[0], access_date))
                 
+            user_session["userId"] = user[0]
+            user_session["username"] = user[1]
+            user_session["loggedIn"] = True
             
             print(f"Hello, {username}!")
+            help()
 
             conn.commit()
 
