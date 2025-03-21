@@ -173,7 +173,7 @@ def follow():
     try:
         
         # gets userid from email table
-        curs.execute("SELECT userid FROM email WHERE email = %s", user_email)
+        curs.execute("SELECT userid FROM email WHERE email = %s", (user_email,))
         user_id = curs.fetchone()
         
         if not user_id:
@@ -183,8 +183,17 @@ def follow():
         
         followed_id = user_id[0]
         
+        # Check if the user is already being followed
+        curs.execute("SELECT 1 FROM follows WHERE follower = %s AND followee = %s", (user_session["userId"], followed_id))
+        existing_follow = curs.fetchone()
+
+        if existing_follow:
+        
+            print(f"You are already following {user_email}")
+            return
+        
         # gets username of the userid from users table
-        curs.execute("SELECT username FROM users WHERE userid = %s", (followed_id))
+        curs.execute("SELECT username FROM users WHERE userid = %s", (followed_id,))
         user_data = curs.fetchone()
         
         if not user_data:
@@ -193,7 +202,7 @@ def follow():
             return
         
         followed_username = user_data[0]
-        curs.execute("INSERT INTO follows VALUES (%s, %s)", user_session["userId"], followed_id)
+        curs.execute("INSERT INTO follows VALUES (%s, %s)", (user_session["userId"], followed_id))
         conn.commit()
         print(f"You are follwing {followed_username}")
         
@@ -210,7 +219,7 @@ def unfollow():
     try:
         
         # gets userid 
-        curs.execute("SELECT userid FROM email WHERE email = %s", user_email)
+        curs.execute("SELECT userid FROM email WHERE email = %s", (user_email,))
         user_id = curs.fetchone()
         
         if not user_id:
@@ -219,6 +228,15 @@ def unfollow():
             return
         
         followed_id = user_id[0]
+        
+        # Check if the user is already being followed
+        curs.execute("SELECT 1 FROM follows WHERE follower = %s AND followee = %s", (user_session["userId"], followed_id))
+        existing_follow = curs.fetchone()
+
+        if not existing_follow:
+        
+            print(f"You are not following {user_email}")
+            return
         
         # gets username of the userid from users table
         curs.execute("SELECT * FROM follows WHERE follower = %s AND followee = %s", (user_session["userId"], followed_id))
@@ -229,14 +247,25 @@ def unfollow():
             print("User data missing")
             return
         
-        followed_username = user_data[0]
-        curs.execute("DELETE FROM follows WHERE follower = %s AND followee = %s", user_session["userId"], followed_id)
+        # Get the followed user's username
+        curs.execute("SELECT username FROM users WHERE userid = %s", (followed_id,))
+        followed_user = curs.fetchone()
+        
+        if not followed_user:
+        
+            print("Followed user not found")
+            return
+        
+        followed_username = followed_user[0]
+        
+        # delete follower, followee relation from follows
+        curs.execute("DELETE FROM follows WHERE follower = %s AND followee = %s", (user_session["userId"], followed_id))
         conn.commit()
         print(f"You unfollowed {followed_username}")
         
     except Exception as e:
         
-        print("Error following user")
+        print("Error unfollowing user")
         conn.rollback()
 
 def watch_movie():
@@ -247,7 +276,7 @@ def watch_movie():
     try:
         
         # checks if movie exists in database
-        curs.execute("SELECT * FROM movie WHERE movieid = %s", movie_id)
+        curs.execute("SELECT * FROM movie WHERE movieid = %s", (movie_id,))
         movie = curs.fetchone()
         
         if not movie:
@@ -258,7 +287,7 @@ def watch_movie():
 
         # adds an entry in watches table
         curs.execute("INSERT INTO watches(userid, movieid, datetimewatched) VALUES (%s, %s, %s)"
-                     , user_session["userId"], movie_id, watch_date)
+                     , (user_session["userId"], movie_id, watch_date))
         conn.commit()
         print(f"Watched {movie}")
         
@@ -275,7 +304,7 @@ def watch_collection():
     try:
         
         # gets movieid that are in the collection
-        curs.execute("SELECT movieid FROM partof WHERE collectionid = %s", collection_id)
+        curs.execute("SELECT movieid FROM partof WHERE collectionid = %s", (collection_id,))
         movies = curs.fetchall()
         watch_date = datetime.datetime.now()
         
@@ -303,7 +332,7 @@ def rate_movie():
     rating = round(float(input("Enter rating: ")))
     
     # gets the movie with the movieid
-    curs.execute("SELECT * FROM movie WHERE movieId = %s", movie_id)
+    curs.execute("SELECT * FROM movie WHERE movieId = %s", (movie_id,))
     movie = curs.fetchone()
     
     if movie:
@@ -380,6 +409,8 @@ def search():
         if sort_order != "ASC" | "DESC":
 
             print("Must either select ASC or DESC!")
+
+            return
 
         sort_column = sort_options[sort_by]
         selected_order = (f"ORDER BY {sort_column} {sort_order}")
@@ -580,7 +611,7 @@ def delete_collection():
     
     try:
         
-        curs.execute("SELECT * FROM collection WHERE collectionid = %s", collection_id)
+        curs.execute("SELECT * FROM collection WHERE collectionid = %s", (collection_id,))
         collection = curs.fetchone()
         
         if not collection:
@@ -588,10 +619,10 @@ def delete_collection():
             return
         
         # delete collection from partof table
-        curs.execute("DELETE FROM partof WHERE collectionid = %s", collection_id)
+        curs.execute("DELETE FROM partof WHERE collectionid = %s", (collection_id,))
         
         # delete collection from collection table
-        curs.execute("DELETE FROM collection WHERE collection id = %s", collection_id)
+        curs.execute("DELETE FROM collection WHERE collection id = %s", (collection_id,))
         conn.commit()
         print(f"Deleted collection {collection_id}")
     
@@ -689,6 +720,57 @@ def create_collection():
 
 def name_collection():
 
+    print("Modifying the name of a collection")
 
-    pass
+    try: 
+
+        user_id = user_session["userId"]
+
+        curs.execute("SELECT collectionid, collectionname FROM collection where userid = %s", (user_id,))
+
+        collection_list = curs.fetchall()
+
+        if not collection_list:
+            
+            print("You have no collections right now")
+
+            return
+        
+        print("Your Collections: ")
+        
+        for collection in collection_list:
+
+            print(f"ID: {collection[0]}, Collection Name: {collection[1]}")
+
+        collection_index = int(input("Select Collection ID to modify: ").strip()) - 1
+
+        if collection_index < 0 or collection_index >= len(collection_list):
+
+            print("Invalid selection for collection")
+
+            return
+        
+        collection_id = collection_list[collection_index][0]
+        collection_name = collection_list[collection_index][1]
+
+        new_collection_name = input(f"Current Collection Name: '{collection_name}'. Enter new name: ").strip()
+
+        if not new_collection_name:
+
+            print("Collection name cannot be empty")
+
+            return
+
+        curs.execute("""UPDATE Collection
+                        SET CollectionName = %s
+                        WHERE CollectionID = %s""", (new_collection_name, collection_id))
+
+        conn.commit()
+
+        print(f"Collection name successfully updated to '{new_collection_name}'.")
+
+    except Exception as e:
+        
+        print("Error modifying collection name:", e)
+        conn.rollback()
 
