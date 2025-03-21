@@ -100,7 +100,7 @@ def create_account():
         curs.execute("INSERT INTO users(userid, username, firstname, lastname, password, creationdate) VALUES (%s, %s, %s, %s, %s, %s)", (uid, username, firstname, lastname, password, creation_date))
         print("Account has been created \n")
         login()
-        #conn.commit()
+        conn.commit()
         
     except Exception as e:
         
@@ -165,7 +165,7 @@ def follow():
         
         followed_username = user_data[0]
         curs.execute("INSERT INTO follows VALUES (%s, %s)", user_session["userId"], followed_id)
-        #conn.commit()
+        conn.commit()
         print(f"You are follwing {followed_username}")
         
     except Exception as e:
@@ -202,7 +202,7 @@ def unfollow():
         
         followed_username = user_data[0]
         curs.execute("DELETE FROM follows WHERE follower = %s AND followee = %s", user_session["userId"], followed_id)
-        #conn.commit()
+        conn.commit()
         print(f"You unfollowed {followed_username}")
         
     except Exception as e:
@@ -230,7 +230,7 @@ def watch_movie():
         # adds an entry in watches table
         curs.execute("INSERT INTO watches(userid, movieid, datetimewatched) VALUES (%s, %s, %s)"
                      , user_session["userId"], movie_id, watch_date)
-        #conn.commit
+        conn.commit()
         print(f"Watched {movie}")
         
     except Exception as e:
