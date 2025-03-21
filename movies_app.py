@@ -525,8 +525,7 @@ def create_collection():
 
     try:
         
-        curs.execute("SELECT collectionname FROM collection WHERE collectionname = %s AND userid = %s", (new_collection, user_id))
-
+        curs.execute("SELECT collectionid FROM collection WHERE collectionname = %s AND userid = %s", (new_collection, user_id))
         exist_collection = curs.fetchone()
 
         if exist_collection:
@@ -534,14 +533,28 @@ def create_collection():
             print(f"You already have a collection named '{new_collection}'")
 
             return
+        
+        # gets the highest collection id
+        # since collection id is a string like c1, c2, c3...
+        # we use substring 2 to get numbers after "c" and cast numbers into integers
+        curs.execute("""
+            SELECT MAX(CAST(SUBSTRING(collectionid FROM 2) AS INT)) 
+            FROM collection
+        """)
 
-        #must get the current collectionid and increment it
+        # the very last collection id of the database
+        # must retrieve the value by using [0] in tuple
+        latest_cid = curs.fetchone()[0]
 
-        curs.execute("SELECT COALESCE(MAX(CAST(collectionid AS INTEGER)), 0) + 1 FROM collection")
+        if latest_cid:
 
-        collection_id = curs.fetchone()[0]  # Get the next collectionid
+            collection_id = f"c{latest_cid + 1}"
 
-        #relational table is Collection(CollectionName, UserID)
+        else:
+
+            collection_id = "c1"
+
+        #relational table is collection(collectionid, collectionname, userid)
         curs.execute("INSERT INTO Collection(collectionid, collectionname, userid) VALUES (%s, %s, %s)", (collection_id, collection_name, user_id))
 
         conn.commit()
