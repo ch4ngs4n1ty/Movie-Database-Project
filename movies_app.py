@@ -202,9 +202,6 @@ def search():
         print(f"Release Date: {release_date}")
 
 
-
-
-
 def add_to_collection():
     pass
 
