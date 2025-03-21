@@ -11,6 +11,8 @@ user_session = {
     "following": 0,
     "collections": 0
     }
+curs = None
+conn = None
 
 def main(cursor, connection):
     
