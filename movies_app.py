@@ -86,14 +86,14 @@ def create_account():
     try:
         
         # gets the next available userId from users
-        curs.execute("SELECT COALESCE(MAX(CAST(SUBSTRING(userId, 2) as INTEGER)), 0) + 1 FROM users")
+        curs.execute("SELECT COALESCE(MAX(CAST(SUBSTRING(userId FROM 2) as INTEGER)), 0) + 1 FROM users")
         new_id = curs.fetchone()[0]
         uid = f"u{new_id}"
         username = input("Username: ").strip()
         password = input("Password: ").strip()
         firstname = input("First Name: ").strip()
         lastname = input("Last Name: ").strip()
-        region = input("RegionL ").strip()
+        region = input("Region: ").strip()
         dob = input("Date of birth(YYYY-MM-DD): ").strip()
         email = input("Email address: ").strip()
         creation_date = datetime.datetime.now()
@@ -101,6 +101,10 @@ def create_account():
         # adds the users account to users
         curs.execute("INSERT INTO users(userid, username, firstname, lastname, region, dob, password, creationdate) VALUES (%s, %s, %s, %s, %s, %s, %s, %s)",
                      (uid, username, firstname, lastname, region, dob, password, creation_date))
+        
+        # adds to email table
+        curs.execute("INSERT INTO email(userid, email) VALUES(%s, %s)", (uid, email))
+        
         conn.commit()
         print("Account has been created \n")
         login()
@@ -169,7 +173,7 @@ def follow():
         followed_username = user_data[0]
         curs.execute("INSERT INTO follows VALUES (%s, %s)", user_session["userId"], followed_id)
         conn.commit()
-        print(f"You are follwing {followed_username}")
+        print(f"You are following {followed_username}")
         
     except Exception as e:
         
