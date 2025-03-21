@@ -79,6 +79,21 @@ def main(cursor, connection):
                     print("Invalid command")
                     help()
 
+def help():
+    print("logout - logout of account")
+    print("follow - follow a user")
+    print("unfollow - unfollow a user")
+    print("watch movie - watch a mmovie")
+    print("watch collection - watch a collection")
+    print("rate - rate a movie")
+    print("search - search for a movie or user")
+    print("add - add a movie to a collection")
+    print("remove - remove a movie from a collection")
+    print("delete - delete a movie from a collection")
+    print("view collections - view all collections")
+    print("create collection - create a collection")
+    print("name collection - name a collection")
+    
 def create_account():
     
     try:
