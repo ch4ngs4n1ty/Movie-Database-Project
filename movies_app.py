@@ -494,6 +494,7 @@ def delete_collection():
         curs.execute("SELECT * FROM collection WHERE collectionid = %s", collection_id)
         collection = curs.fetchone()
         
+        # checks if collection exists in collection table
         if not collection:
             print("Collection not found")
             return
@@ -585,5 +586,30 @@ def create_collection():
         conn.rollback()
 
 def name_collection():
-    pass
+    
+    print("Rename a collection: ")
+    collection_id = input("Enter collection ID to rename: ").strip()
+    
+    curs.execute("SELECT * FROM collection WHERE collectionid = %s", collection_id)
+    collection = curs.fetchone()
+    
+    # check if collection exists in collection table
+    if not collection:
+        
+        print("Collection not found")
+        return
+    
+    new_name = input("Enter new name for collection: ").strip()
+    
+    try:
+        
+        # changes collectionname in collection to input
+        curs.execute("UPDATE collection SET collectionname = %s WHERE collectionid = %s", (new_name, collection_id))
+        conn.commit()
+        print(f"Renamed collection {collection_id} to {new_name}")
+        
+    except Exception as e:
+        
+        print("Error renaming collection")
+        conn.rollback()
 
