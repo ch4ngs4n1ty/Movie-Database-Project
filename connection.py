@@ -41,5 +41,9 @@ try:
 
         conn.close()
         print("Database connection closed.")
-except:
-    print("Connection failed")
+
+except Exception as e:
+    print(f"Connection failed: {e}")
+
+#except:
+#    print("Connection failed")

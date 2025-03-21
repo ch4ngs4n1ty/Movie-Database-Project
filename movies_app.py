@@ -2,7 +2,6 @@ import psycopg
 import os
 import datetime
 
-# 
 user_session = {
     "loggedIn": False,
     "userId": None,
@@ -79,7 +78,6 @@ def main(cursor, connection):
                 else:
                     print("Invalid command")
                     help()
-                    
 
 def create_account():
     
@@ -116,28 +114,56 @@ def login():
     username = input("Username: ")
     password = input("Password: ")
 
-    #selects only userid, username, and password 
-    curs.execute("SELECT userid, username, password FROM users WHERE username = %s", (username,)) 
+    try:
 
-    #search for user with the provided username
-    #user = (userid, username, password)
-    user = curs.fetchone() 
+        #selects only userid, username, and password 
+        curs.execute("SELECT userid, username, password FROM users WHERE username = %s", (username,)) 
 
-    #checks if user exists and user's password equals to inputted password
-    if user and user[2] == password: 
+        #search for user with the provided username
+        #user = (userid, username, password)
+        user = curs.fetchone() 
 
-        access_date = datetime.datetime.now()
+        #checks if user exists and user's password equals to inputted password
+        if user and user[2] == password: 
 
-        #relational table is AccessDate(UserID, AccessDate)
-        curs.execute("IN users SET AccessDate(userid, accessdate) VALUES (%s, %s)" , (user[0], access_date))
+            access_date = datetime.datetime.now()
 
-        conn.commit()
+            #relational table is accessdates(userid), accessdate)
+            #curs.execute("INSERT INTO accessdates(userid, accessdate) VALUES (%s, %s)", (user[0], access_date))
 
-        print(f"Hello, {username}!")
+            curs.execute("SELECT 1 FROM accessdates WHERE userid = %s", (user[0],))
 
-    else: 
+            existing_entry = curs.fetchone()
 
-        print("Invalid username or password!")
+            if existing_entry:  
+
+                curs.execute("""
+                    UPDATE accessdates 
+                    SET accessdate = %s 
+                    WHERE userid = %s """, (access_date, user[0]))
+                
+                #print(f"Access date updated for {username}!")
+
+            else:  
+
+                curs.execute("""
+                    INSERT INTO accessdates(userid, accessdate)
+                    VALUES (%s, %s)""", (user[0], access_date))
+                
+            
+            print(f"Hello, {username}!")
+
+            conn.commit()
+
+        else: 
+
+            print("Invalid username or password!")
+
+    except Exception as e:
+
+        print(f"An error occurred: {e}")
+
+        conn.rollback()  
 
 def follow():
     
@@ -371,7 +397,83 @@ def search():
 
 
 def add_to_collection():
-    pass
+
+    ("Adding a movie to your collection")
+
+    try:
+
+        user_id = user_session["userId"]
+
+        # Collection(CollectionID, CollectionName, UserID)
+        curs.execute("""SELECT CollectionID, CollectionName, 
+                        FROM Collection 
+                        WHERE UserID = %s""" , (user_id,))
+        
+        collection_list = curs.fetchall()
+
+        if not collection_list:
+            
+            print("You currently have no collections right now.")
+
+            return
+
+        print("Your Collections: ")
+
+        for collection in collection_list:
+            
+            print(f"ID: {collection[0]}, Collection Name: {collection[1]}")
+
+        collection_index = int(input("Select Collection ID: ").strip()) - 1
+
+        if collection_index < 0 or collection_index >= len(collection_list):
+
+            print("Invalid selection for collection")
+
+            return
+        
+        collection_id = collection_list[collection_index][0]
+        collection_name = collection_list[collection_index][1]
+
+        movie_name = input("Input the Movie Name to add: ").strip()
+
+        curs.execute("""SELECT MovieID
+                        FROM Movie
+                        WHERE MovieName = %s""", (movie_name,))
+        
+        movie = curs.fetchone()
+
+        if not movie:
+
+            print("Movie is not found in database")
+
+            return
+        
+        movie_id = movie[0]
+
+        # checks if movie is already in the collection
+        curs.execute("""SELECT *
+                        FROM PartOf 
+                        WHERE CollectionID = %s AND MovieID = %s""", (collection_id, movie_id))
+        
+        already_exist = curs.fetchone()
+
+        if already_exist:
+            
+            print(f"'{movie_name}' is already in a collection you selected")
+
+            return
+        
+        curs.execute("INSERT INTO PartOf(MovieID, CollectionID) VALUES (%s, %s)" , (movie_id, collection_id))
+
+        conn.commit()
+
+        print(f"Successfully added '{movie_name}' to '{collection_name}")
+
+    except Exception as e:
+
+        print("Error adding movie to collection", e)
+
+        conn.rollback()
 
 def remove_from_collection():
     pass
@@ -405,26 +507,42 @@ def view_collections():
         num_movies = collect[1]
         total_length = collect[2]
 
-        print("Collection Name: " + name + "Number Of Movies: " + num_movies + "Total Length Of Movies In Collection: " + total_length)
+        print("Collection Name: '{name}'  Number Of Movies: '{num_movies}' Total Length Of Movies In Collection: '{total_length}'")
 
 #user will be able to create collection of movies
 def create_collection():
 
-    #checks if the user is logged in
-    user_id = user_session["userid"]
+    print("Creating a new collection")
 
-    if not user_id:
-        
-        print("Need to be logged in to create a new collection")
-        return
+    #checks if the user is logged in
+    #user_id = user_session["userid"]
 
     new_collection = input("Input the name of your new collection: ")
+
     collection_name = new_collection.strip()
+
+    user_id = user_session["userId"]
 
     try:
         
+        curs.execute("SELECT collectionname FROM collection WHERE collectionname = %s AND userid = %s", (new_collection, user_id))
+
+        exist_collection = curs.fetchone()
+
+        if exist_collection:
+
+            print(f"You already have a collection named '{new_collection}'")
+
+            return
+
+        #must get the current collectionid and increment it
+
+        curs.execute("SELECT COALESCE(MAX(CAST(collectionid AS INTEGER)), 0) + 1 FROM collection")
+
+        collection_id = curs.fetchone()[0]  # Get the next collectionid
+
         #relational table is Collection(CollectionName, UserID)
-        curs.execute("INSERT INTO Collection(collectionname, userid) VALUES (%s, %s)", (collection_name, user_id))
+        curs.execute("INSERT INTO Collection(collectionid, collectionname, userid) VALUES (%s, %s, %s)", (collection_id, collection_name, user_id))
 
         conn.commit()
 
