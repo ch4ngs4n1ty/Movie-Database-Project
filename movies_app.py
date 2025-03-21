@@ -169,6 +169,9 @@ def login():
                     INSERT INTO accessdates(userid, accessdate)
                     VALUES (%s, %s)""", (user[0], access_date))
                 
+            user_session["userId"] = user[0]
+            user_session["username"] = user[1]
+            user_session["loggedIn"] = True
             
             print(f"Hello, {username}!")
             help()
