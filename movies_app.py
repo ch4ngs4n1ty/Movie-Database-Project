@@ -73,14 +73,29 @@ def main(cursor, connection):
                     delete_collection()
                 elif command == "view collections":
                     view_collections()
-                elif command == "create_collection":
+                elif command == "create collection":
                     create_collection()
-                elif command == "name_collection":
+                elif command == "name collection":
                     name_collection()
                 else:
                     print("Invalid command")
                     help()
 
+def help():
+    print("logout - logout of account")
+    print("follow - follow a user")
+    print("unfollow - unfollow a user")
+    print("watch movie - watch a mmovie")
+    print("watch collection - watch a collection")
+    print("rate - rate a movie")
+    print("search - search for a movie or user")
+    print("add - add a movie to a collection")
+    print("remove - remove a movie from a collection")
+    print("delete - delete a movie from a collection")
+    print("view collection - view a collection")
+    print("create collection - create a collection")
+    print("name collection - name a collection")
+    
 def create_account():
     
     try:
@@ -236,6 +251,8 @@ def unfollow():
             return
         
         followed_username = user_data[0]
+        
+        # delete follower, followee relation from follows
         curs.execute("DELETE FROM follows WHERE follower = %s AND followee = %s", user_session["userId"], followed_id)
         conn.commit()
         print(f"You unfollowed {followed_username}")
@@ -307,7 +324,7 @@ def watch_collection():
 def rate_movie():
     
     print("Rate movie")
-    movie_id = int(input("Enter movie ID: "))
+    movie_id = input("Enter movie ID: ")
     rating = round(float(input("Enter rating: ")))
     
     # gets the movie with the movieid
