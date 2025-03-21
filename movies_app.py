@@ -410,6 +410,8 @@ def search():
 
             print("Must either select ASC or DESC!")
 
+            return
+
         sort_column = sort_options[sort_by]
         selected_order = (f"ORDER BY {sort_column} {sort_order}")
 
@@ -718,29 +720,6 @@ def create_collection():
 
 def name_collection():
 
-    print("Rename a collection: ")
-    collection_id = input("Enter collection ID to rename: ").strip()
-    
-    curs.execute("SELECT * FROM collection WHERE collectionid = %s", collection_id)
-    collection = curs.fetchone()
-    
-    # check if collection exists in collection table
-    if not collection:
-        
-        print("Collection not found")
-        return
-    
-    new_name = input("Enter new name for collection: ").strip()
-    
-    try:
-        
-        # changes collectionname in collection to input
-        curs.execute("UPDATE collection SET collectionname = %s WHERE collectionid = %s", (new_name, collection_id))
-        conn.commit()
-        print(f"Renamed collection {collection_id} to {new_name}")
-        
-    except Exception as e:
-        
-        print("Error renaming collection")
-        conn.rollback()
+
+    pass
 
