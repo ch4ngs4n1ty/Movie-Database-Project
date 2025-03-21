@@ -396,7 +396,7 @@ def search():
 
 def add_to_collection():
 
-    ("Adding a movie to your collection")
+    print("Adding a movie to your collection")
 
     try:
 
@@ -542,8 +542,33 @@ def remove_from_collection():
         conn.rollback()
 
 def delete_collection():
-    pass
+    
+    print("Deleting a collection")
+    collection_id = input("Enter collection ID: ").strip()
+    
+    try:
+        
+        curs.execute("SELECT * FROM collection WHERE collectionid = %s", collection_id)
+        collection = curs.fetchone()
+        
+        if not collection:
+            print("Collection not found")
+            return
+        
+        # delete collection from partof table
+        curs.execute("DELETE FROM partof WHERE collectionid = %s", collection_id)
+        
+        # delete collection from collection table
+        curs.execute("DELETE FROM collection WHERE collection id = %s", collection_id)
+        conn.commit()
+        print(f"Deleted collection {collection_id}")
+    
+    except Exception as e:
+        
+        print("Error deleting collection")
+        conn.rollback()
 
+    
 def view_collections():
 
     user_id = user_session["userid"]
