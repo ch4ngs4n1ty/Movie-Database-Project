@@ -37,7 +37,7 @@ try:
         print("Database connection established")
 
         #DB work here....
-        movies_app.main(conn, curs)
+        movies_app.main(curs, conn)
 
         conn.close()
         print("Database connection closed.")

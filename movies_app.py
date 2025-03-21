@@ -2,35 +2,48 @@ import psycopg
 import os
 import datetime
 
+# 
+user_session = {
+    "loggedIn": False,
+    "userId": None,
+    "userIndex": [],
+    "followers": 0,
+    "following": 0,
+    "collections": 0
+    }
+
 def main(cursor, connection):
+    
     global curs, conn
     curs = cursor
     conn = connection
-    user_session = {
-        "loggedIn": False,
-        "userid": None,
-        "userIndex": [],
-        "followers": 0,
-        "following": 0,
-        "collections": 0
-    }
     
     while True:
+        
         while not user_session["loggedIn"]:
+            
             command = input("Would you like to login or create an account?\n")
             if command == "create account":
+                
                 create_account()
                 user_session["loggedIn"] = True
+                
             if command == "login":
+                
                 login()
                 user_session["loggedIn"] = True
+                
             else:
+                
                 print("login - log into an account")
                 print("create account - create an account")
             
             while user_session["loggedIn"]:
+                
                 command = input("Enter a command:\n")
+                
                 if command == "logout":
+                    
                     user_session["logged_in"] = False
                     user_session["userid"] = ""
                     user_session["userIndex"] = []
@@ -38,6 +51,7 @@ def main(cursor, connection):
                     user_session["following"] = 0
                     user_session["collections"] = 0
                     print("Logged out")
+                    
                 elif command == "follow":
                     follow()
                 elif command == "unfollow":
@@ -68,21 +82,31 @@ def main(cursor, connection):
                     
 
 def create_account():
-    curs.execute("SELECT MAX(userid) FROM users")
-    uid = curs.fetchone()[0] + 1
-    username = input("Username: ")
-    password = input("Password: ")
-    firstname = input("First Name: ")
-    lastname = input("Last Name: ")
-    email = input("Email address: ")
-    creation_date = datetime.datetime.now()
+    
     try:
-        curs.execute("INSERT INTO users(userid, username, firstname, lastname, region, dob, password, creationdate) VALUES (%s, %s, %s, %s, %s,%s, %s)", (uid, email, username, password, firstname, lastname, password, creation_date))
+        
+        # gets the next available userId from users
+        curs.execute("SELECT COALESCE(MAX(CAST(SUBSTRING(userId, 2) as INTEGER)), 0) + 1 FROM users")
+        new_id = curs.fetchone()[0]
+        uid = f"u{new_id}"
+        username = input("Username: ").strip()
+        password = input("Password: ").strip()
+        firstname = input("First Name: ").strip()
+        lastname = input("Last Name: ").strip()
+        email = input("Email address: ").strip()
+        creation_date = datetime.datetime.now()
+        
+        # adds the users account to users
+        curs.execute("INSERT INTO users(userid, username, firstname, lastname, password, creationdate) VALUES (%s, %s, %s, %s, %s, %s)", (uid, username, firstname, lastname, password, creation_date))
         print("Account has been created \n")
         login()
+        conn.commit()
+        
     except Exception as e:
-        print("Error occurred", e)
+        
+        print("Error occurred creating account", e)
         conn.rollback()
+
 
 def login():
 
@@ -113,19 +137,160 @@ def login():
         print("Invalid username or password!")
 
 def follow():
-    pass
+    
+    print("Follow a user")
+    user_email = input("Enter users email: ").strip()
+    
+    try:
+        
+        # gets userid from email table
+        curs.execute("SELECT userid FROM email WHERE email = %s", user_email)
+        user_id = curs.fetchone()
+        
+        if not user_id:
+            
+            print("No user with this email found")
+            return
+        
+        followed_id = user_id[0]
+        
+        # gets username of the userid from users table
+        curs.execute("SELECT username FROM users WHERE userid = %s", (followed_id))
+        user_data = curs.fetchone()
+        
+        if not user_data:
+            
+            print("User data missing")
+            return
+        
+        followed_username = user_data[0]
+        curs.execute("INSERT INTO follows VALUES (%s, %s)", user_session["userId"], followed_id)
+        conn.commit()
+        print(f"You are follwing {followed_username}")
+        
+    except Exception as e:
+        
+        print("Error following user")
+        conn.rollback()
 
 def unfollow():
-    pass
+    
+    print("Unfollow a user")
+    user_email = input("Enter users email: ").strip()
+    
+    try:
+        
+        # gets userid 
+        curs.execute("SELECT userid FROM email WHERE email = %s", user_email)
+        user_id = curs.fetchone()
+        
+        if not user_id:
+            
+            print("No user with this email found")
+            return
+        
+        followed_id = user_id[0]
+        
+        # gets username of the userid from users table
+        curs.execute("SELECT * FROM follows WHERE follower = %s AND followee = %s", (user_session["userId"], followed_id))
+        user_data = curs.fetchone()
+        
+        if not user_data:
+            
+            print("User data missing")
+            return
+        
+        followed_username = user_data[0]
+        curs.execute("DELETE FROM follows WHERE follower = %s AND followee = %s", user_session["userId"], followed_id)
+        conn.commit()
+        print(f"You unfollowed {followed_username}")
+        
+    except Exception as e:
+        
+        print("Error following user")
+        conn.rollback()
 
 def watch_movie():
-    pass
+    
+    print("Watch a movie")
+    movie_id = input("Enter Movie ID: ").strip()
+    
+    try:
+        
+        # checks if movie exists in database
+        curs.execute("SELECT * FROM movie WHERE movieid = %s", movie_id)
+        movie = curs.fetchone()
+        
+        if not movie:
+            print("Movie not found")
+            return
+        
+        watch_date = datetime.datetime.now()
+
+        # adds an entry in watches table
+        curs.execute("INSERT INTO watches(userid, movieid, datetimewatched) VALUES (%s, %s, %s)"
+                     , user_session["userId"], movie_id, watch_date)
+        conn.commit()
+        print(f"Watched {movie}")
+        
+    except Exception as e:
+        
+        print("Error watching movie")
+        conn.rollback()
+        
+        
 
 def watch_collection():
-    pass
+    
+    print("Watch a collection")
+    collection_id = input("Enter Collection ID: ").strip()
+    
+    try:
+        
+        # gets movieid that are in the collection
+        curs.execute("SELECT movieid FROM partof WHERE collectionid = %s", collection_id)
+        movies = curs.fetchall()
+        watch_date = datetime.datetime.now()
+        
+        # checks if there are movies in the collection
+        if not movies:
+            print("No movies in collection")
+            return
+        
+        # creates a watches entry for each movie in the collection
+        for movie in movies:
+            
+            movie_id = movie[0]
+            curs.execute("INSERT INTO watches(userid, movieid, datetimewatched) VALUES (%s, %s, %s)",
+                         (user_session["userId"], movie_id, watch_date))
+        
+    except Exception as e:
+        
+        print("Error watching collection")
+        conn.rollback()
 
 def rate_movie():
-    pass
+    
+    print("Rate movie")
+    movie_id = int(input("Enter movie ID: "))
+    rating = round(float(input("Enter rating: ")))
+    
+    # gets the movie with the movieid
+    curs.execute("SELECT * FROM movie WHERE movieId = %s", movie_id)
+    movie = curs.fetchone()
+    
+    if movie:
+        
+        try:
+            
+            # adds the movie rating into rates table
+            curs.execute("INSERT INTO rates VALUES (%s, %s, %s)", (user_session["userId"], movie_id, rating))
+            print("Rating successful")
+        
+        except Exception as e:
+        
+            print("Error occured rating movie")
+            conn.rollback
 
 def search():
 
