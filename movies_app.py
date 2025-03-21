@@ -211,23 +211,84 @@ def unfollow():
         conn.rollback()
 
 def watch_movie():
-    pass
+    
+    print("Watch a movie")
+    movie_id = input("Enter Movie ID: ").strip()
+    
+    try:
+        
+        # checks if movie exists in database
+        curs.execute("SELECT * FROM movie WHERE movieid = %s", movie_id)
+        movie = curs.fetchone()
+        
+        if not movie:
+            print("Movie not found")
+            return
+        
+        watch_date = datetime.datetime.now()
+
+        # adds an entry in watches table
+        curs.execute("INSERT INTO watches(userid, movieid, datetimewatched) VALUES (%s, %s, %s)"
+                     , user_session["userId"], movie_id, watch_date)
+        #conn.commit
+        print(f"Watched {movie}")
+        
+    except Exception as e:
+        
+        print("Error watching movie")
+        conn.rollback()
+        
+        
 
 def watch_collection():
-    pass
+    
+    print("Watch a collection")
+    collection_id = input("Enter Collection ID: ").strip()
+    
+    try:
+        
+        # gets movieid that are in the collection
+        curs.execute("SELECT movieid FROM partof WHERE collectionid = %s", collection_id)
+        movies = curs.fetchall()
+        watch_date = datetime.datetime.now()
+        
+        # checks if there are movies in the collection
+        if not movies:
+            print("No movies in collection")
+            return
+        
+        # creates a watches entry for each movie in the collection
+        for movie in movies:
+            
+            movie_id = movie[0]
+            curs.execute("INSERT INTO watches(userid, movieid, datetimewatched) VALUES (%s, %s, %s)",
+                         (user_session["userId"], movie_id, watch_date))
+        
+    except Exception as e:
+        
+        print("Error watching collection")
+        conn.rollback()
 
 def rate_movie():
     
     print("Rate movie")
     movie_id = int(input("Enter movie ID: "))
     rating = round(float(input("Enter rating: ")))
+    
+    # gets the movie with the movieid
     curs.execute("SELECT * FROM movie WHERE movieId = %s", movie_id)
     movie = curs.fetchone()
+    
     if movie:
+        
         try:
+            
+            # adds the movie rating into rates table
             curs.execute("INSERT INTO rates VALUES (%s, %s, %s)", (user_session["userId"], movie_id, rating))
             print("Rating successful")
+        
         except Exception as e:
+        
             print("Error occured rating movie")
             conn.rollback
 
