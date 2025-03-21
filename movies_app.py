@@ -214,7 +214,82 @@ def rate_movie():
             conn.rollback
 
 def search():
-    pass
+
+    print("Search Movies By:")
+    print("1. Name")
+    print("2. Release Date")
+    print("3. Cast Member")
+    print("4. Studio")
+    print("5. Genre")
+
+    prompt_options = {
+        "1": "Title of Movie",
+        "2": "Release Date In YYYY-MM-DD",
+        "3": "Cast Member Name",
+        "4": "Studio",
+        "5": "Genre"
+    }
+
+    search_options = {
+        "1": "LOWER(m.title)",   
+        "2": "LOWER(ro.releasedate)",
+        "3": "LOWER(CONCAT(mp.firstname, ' ', mp.lastname))",
+        "4": "LOWER(m.studio)",
+        "5": "LOWER(m.genre)"
+    }
+
+    search_by = input("Select (1 - 5): ").strip()
+
+    #searched value to actually get the value user inputs
+    selected_search = search_options[search_by]
+
+    #prompt used to guide user's interaction
+    selected_prompt = prompt_options[search_by] 
+
+    search_value = input(f"Enter {selected_prompt}: ").strip()       
+
+    val = f"%{search_value.lower()}" 
+
+    curs.execute("""SELECT m.title, 
+                    mp.firstname,
+                    mp.lastname,
+                    d.firstname,
+                    d.lastname,
+                    m.duration,
+                    m.mpaarating,
+                    ROUND(AVG(r.starrating), 1) AS user_rating
+                    FROM Movie m
+                    LEFT JOIN StarsIn si ON m.movieid = si.movieid
+                    LEFT JOIN MoviePeople mp ON si.personid = mp.personid
+                    LEFT JOIN Directs dir on m.movieid = dir.movieid
+                    LEFT JOIN MoviePeople p on dir.personid = p.personid
+                    LEFT JOIN Rates r on m.movieid = r.movieid 
+                    LEFT JOIN ReleaseOn ro on m.movieid = ro.movieid
+                    WHERE {selected_search} LIKE %s
+                    GROUP BY m.movieid, mp.firstname, mp.lastname, d.firstname, d.lastname, m.duration, m.mpaarating
+                    ORDER BY m.title ASC, ro.releasedate ASC;""", (val,)) 
+    
+    result_list = curs.fetchall()
+
+    if not result_list:
+        print("No results found")
+        return
+
+    for result in result_list:
+
+        title, cast_member, director, length, mpaa_rating, user_rating, release_date = result
+
+        print(f"Title: {title}")
+        print(f"Cast: {cast_member}")
+        print(f"Director: {director}")
+        print(f"Length: {length}")
+        print(f"MPAA Rating: {mpaa_rating}")
+        print(f"User Rating: {user_rating}")
+        print(f"Release Date: {release_date}")
+
+
+
+
 
 def add_to_collection():
     pass
@@ -226,7 +301,32 @@ def delete_collection():
     pass
 
 def view_collections():
-    pass
+
+    user_id = user_session["userid"]
+
+    if not user_id:
+        
+        print("Need to be logged in to view collection")
+        return
+
+    curs.execute("""SELECT c.collectionname, 
+                 COUNT(m.movieid) AS num_movies,
+                 TO_CHAR(MAKE_INTERVAL(mins => SUM(duration)), 'HH24:MI') AS total_length
+                 FROM collection c
+                 LEFT JOIN movie m ON c.movieid = m.movieid
+                 WHERE c.userid = %s
+                 GROUP BY c.collectionname
+                 ORDER BY c.collectionname ASC""", (user_id,))
+                
+    list_collections = conn.fetchall()
+
+    for collect in list_collections:
+
+        name = collect[0]
+        num_movies = collect[1]
+        total_length = collect[2]
+
+        print("Collection Name: " + name + "Number Of Movies: " + num_movies + "Total Length Of Movies In Collection: " + total_length)
 
 #user will be able to create collection of movies
 def create_collection():
