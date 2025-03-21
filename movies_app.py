@@ -276,7 +276,7 @@ def watch_movie():
     try:
         
         # checks if movie exists in database
-        curs.execute("SELECT * FROM movie WHERE movieid = %s", movie_id)
+        curs.execute("SELECT * FROM movie WHERE movieid = %s", (movie_id,))
         movie = curs.fetchone()
         
         if not movie:
@@ -287,7 +287,7 @@ def watch_movie():
 
         # adds an entry in watches table
         curs.execute("INSERT INTO watches(userid, movieid, datetimewatched) VALUES (%s, %s, %s)"
-                     , user_session["userId"], movie_id, watch_date)
+                     , (user_session["userId"], movie_id, watch_date))
         conn.commit()
         print(f"Watched {movie}")
         
@@ -304,7 +304,7 @@ def watch_collection():
     try:
         
         # gets movieid that are in the collection
-        curs.execute("SELECT movieid FROM partof WHERE collectionid = %s", collection_id)
+        curs.execute("SELECT movieid FROM partof WHERE collectionid = %s", (collection_id,))
         movies = curs.fetchall()
         watch_date = datetime.datetime.now()
         
@@ -332,7 +332,7 @@ def rate_movie():
     rating = round(float(input("Enter rating: ")))
     
     # gets the movie with the movieid
-    curs.execute("SELECT * FROM movie WHERE movieId = %s", movie_id)
+    curs.execute("SELECT * FROM movie WHERE movieId = %s", (movie_id,))
     movie = curs.fetchone()
     
     if movie:
@@ -611,7 +611,7 @@ def delete_collection():
     
     try:
         
-        curs.execute("SELECT * FROM collection WHERE collectionid = %s", collection_id)
+        curs.execute("SELECT * FROM collection WHERE collectionid = %s", (collection_id,))
         collection = curs.fetchone()
         
         if not collection:
@@ -619,10 +619,10 @@ def delete_collection():
             return
         
         # delete collection from partof table
-        curs.execute("DELETE FROM partof WHERE collectionid = %s", collection_id)
+        curs.execute("DELETE FROM partof WHERE collectionid = %s", (collection_id,))
         
         # delete collection from collection table
-        curs.execute("DELETE FROM collection WHERE collection id = %s", collection_id)
+        curs.execute("DELETE FROM collection WHERE collection id = %s", (collection_id,))
         conn.commit()
         print(f"Deleted collection {collection_id}")
     
@@ -720,6 +720,57 @@ def create_collection():
 
 def name_collection():
 
+    print("Modifying the name of a collection")
 
-    pass
+    try: 
+
+        user_id = user_session["userId"]
+
+        curs.execute("SELECT collectionid, collectionname FROM collection where userid = %s", (user_id,))
+
+        collection_list = curs.fetchall()
+
+        if not collection_list:
+            
+            print("You have no collections right now")
+
+            return
+        
+        print("Your Collections: ")
+        
+        for collection in collection_list:
+
+            print(f"ID: {collection[0]}, Collection Name: {collection[1]}")
+
+        collection_index = int(input("Select Collection ID to modify: ").strip()) - 1
+
+        if collection_index < 0 or collection_index >= len(collection_list):
+
+            print("Invalid selection for collection")
+
+            return
+        
+        collection_id = collection_list[collection_index][0]
+        collection_name = collection_list[collection_index][1]
+
+        new_collection_name = input(f"Current Collection Name: '{collection_name}'. Enter new name: ").strip()
+
+        if not new_collection_name:
+
+            print("Collection name cannot be empty")
+
+            return
+
+        curs.execute("""UPDATE Collection
+                        SET CollectionName = %s
+                        WHERE CollectionID = %s""", (new_collection_name, collection_id))
+
+        conn.commit()
+
+        print(f"Collection name successfully updated to '{new_collection_name}'.")
+
+    except Exception as e:
+        
+        print("Error modifying collection name:", e)
+        conn.rollback()
 
