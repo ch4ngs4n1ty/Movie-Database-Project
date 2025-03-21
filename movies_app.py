@@ -80,19 +80,23 @@ def main(cursor, connection):
                     help()
 
 def help():
-    print("logout - logout of account")
-    print("follow - follow a user")
-    print("unfollow - unfollow a user")
-    print("watch movie - watch a mmovie")
-    print("watch collection - watch a collection")
-    print("rate - rate a movie")
-    print("search - search for a movie or user")
-    print("add - add a movie to a collection")
-    print("remove - remove a movie from a collection")
-    print("delete - delete a movie from a collection")
-    print("view collections - view all collections")
-    print("create collection - create a collection")
-    print("name collection - name a collection")
+    help_msg = \
+"""
+logout - logout of account
+follow - follow a user
+unfollow - unfollow a user
+watch movie - watch a mmovie
+watch collection - watch a collection
+rate - rate a movie
+search - search for a movie or user
+add - add a movie to a collection
+remove - remove a movie from a collection
+delete - delete a movie from a collection
+view collections - view all collections
+create collection - create a collection
+name collection - name a collection
+"""
+    print(help_msg)
     
 def create_account():
     
@@ -167,6 +171,7 @@ def login():
                 
             
             print(f"Hello, {username}!")
+            help()
 
             conn.commit()
 
