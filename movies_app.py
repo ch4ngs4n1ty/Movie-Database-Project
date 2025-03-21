@@ -113,8 +113,6 @@ def login():
         print("Invalid username or password!")
 
 def follow():
-
-
     pass
 
 def unfollow():
@@ -142,7 +140,32 @@ def delete_collection():
     pass
 
 def view_collections():
-    pass
+
+    user_id = user_session["userid"]
+
+    if not user_id:
+        
+        print("Need to be logged in to view collection")
+        return
+
+    curs.execute("""SELECT c.collectionname, 
+                 COUNT(m.movieid) AS num_movies,
+                 TO_CHAR(MAKE_INTERVAL(mins => SUM(duration)), 'HH24:MI') AS total_length
+                 FROM collection c
+                 LEFT JOIN movie m ON c.movieid = m.movieid
+                 WHERE c.userid = %s
+                 GROUP BY c.collectionname
+                 ORDER BY c.collectionname ASC""", (user_id,))
+                
+    list_collections = conn.fetchall()
+
+    for collect in list_collections:
+
+        name = collect[0]
+        num_movies = collect[1]
+        total_length = collect[2]
+
+        print("Collection Name: " + name + "Number Of Movies: " + num_movies + "Total Length Of Movies In Collection: " + total_length)
 
 #user will be able to create collection of movies
 def create_collection():
