@@ -692,7 +692,9 @@ def remove_from_collection():
             return
 
         print("Your Collections: ")
+
         for collection in collection_list:
+
             print(f"ID: {collection[0]}, Collection Name: {collection[1]}")
 
         collection_id = input("Select Collection ID: ").strip()
@@ -920,16 +922,23 @@ def name_collection():
 
             print(f"ID: {collection[0]}, Collection Name: {collection[1]}")
 
-        collection_index = int(input("Select Collection ID to modify: ").strip()) - 1
+        collection_id = input("Select Collection ID: ").strip()
 
-        if collection_index < 0 or collection_index >= len(collection_list):
+        valid_collection_ids = [collection[0] for collection in collection_list]
 
-            print("Invalid selection for collection")
+        if collection_id not in valid_collection_ids:
 
+            print("Invalid Collection ID. Must input c1, c2, c3....")
+            
             return
-        
-        collection_id = collection_list[collection_index][0]
-        collection_name = collection_list[collection_index][1]
+
+        for collection in collection_list:
+
+            if collection[0] == collection_id:
+
+                collection_name = collection[1]
+
+                break
 
         new_collection_name = input(f"Current Collection Name: '{collection_name}'. Enter new name: ").strip()
 
@@ -939,9 +948,9 @@ def name_collection():
 
             return
 
-        curs.execute("""UPDATE Collection
-                        SET CollectionName = %s
-                        WHERE CollectionID = %s""", (new_collection_name, collection_id))
+        curs.execute("""UPDATE collection
+                        SET collectionname = %s
+                        WHERE collectionid = %s""", (new_collection_name, collection_id))
 
         conn.commit()
 
