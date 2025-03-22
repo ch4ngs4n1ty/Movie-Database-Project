@@ -118,8 +118,8 @@ def rate_movie(user_session, curs, conn):
     try:
         
         # Search for movies by title
-        curs.execute("SELECT movieid, title FROM movie WHERE title ILIKE %s", (movie_name,))
-        movies = curs.fetchone()[0]
+        curs.execute("SELECT movieid FROM movie WHERE title ILIKE %s", (movie_name,))
+        movies = curs.fetchone()
 
         if not movies:
             
@@ -138,7 +138,7 @@ def rate_movie(user_session, curs, conn):
         # Check if the user has already rated this movie
         curs.execute("SELECT * FROM rates WHERE movieid = %s AND userid = %s", 
                      (movie_id, user_session["userId"]))
-        existing_rating = curs.fetchone()[0]
+        existing_rating = curs.fetchone()
 
         if existing_rating:
             
