@@ -9,8 +9,8 @@ user_session = {
     "following": 0,
     "collections": 0
     }
-curs
-conn
+curs = None
+conn = None
 
 def main(cursor, connection):
     
@@ -784,24 +784,32 @@ def view_collections():
         print("Need to be logged in to view collection")
         return
 
-    curs.execute("""SELECT c.collectionname, 
-                 COUNT(m.movieid) AS num_movies,
-                 TO_CHAR(MAKE_INTERVAL(mins => SUM(duration)), 'HH24:MI') AS total_length
-                 FROM collection c
-                 LEFT JOIN movie m ON c.movieid = m.movieid
-                 WHERE c.userid = %s
-                 GROUP BY c.collectionname
-                 ORDER BY c.collectionname ASC""", (user_session["userid"],))
+    try:
+        curs.execute("""
+            SELECT c.collectionname, 
+                   COUNT(p.movieid) AS num_movies,
+                   TO_CHAR(COALESCE(SUM(m.duration), 0) * INTERVAL '1 minute', 'HH24:MI') AS total_length
+            FROM collection c
+            LEFT JOIN partof p ON c.collectionid = p.collectionid  -- Correct JOIN using partof
+            LEFT JOIN movie m ON p.movieid = m.movieid  -- Movies are linked via partof
+            WHERE c.userid = %s
+            GROUP BY c.collectionname
+            ORDER BY c.collectionname ASC
+        """, (user_id,))
                 
-    list_collections = curs.fetchall()
+        list_collections = curs.fetchall()
 
-    for collect in list_collections:
+        for collect in list_collections:
 
-        name = collect[0]
-        num_movies = collect[1]
-        total_length = collect[2]
+            name = collect[0]
+            num_movies = collect[1]
+            #total_length = collect[2]
+            total_length = collect[2] if collect[2] else "00:00" 
 
-        print(f"Collection Name: '{name}'  Number Of Movies: '{num_movies}' Total Length Of Movies In Collection: '{total_length}'")
+            print(f"Collection Name: '{name}'  Number Of Movies: '{num_movies}' Total Length Of Movies In Collection: '{total_length}'")
+    except Exception as e:
+        print(f"Error viewing collection: {e}")
+        conn.rollback()
 
 def create_collection():
     """
