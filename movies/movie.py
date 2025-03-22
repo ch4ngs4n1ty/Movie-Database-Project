@@ -92,7 +92,7 @@ def watch_collection(user_session, curs, conn):
             
             # adds movie name to a list to print
             curs.execute("SELECT title FROM movie WHERE movieid = %s", (movie_id,))         
-            movie_list += curs.fetchone()[0] + " "
+            movie_list += "'" + curs.fetchone()[0] + "' "
             
             
         conn.commit()
