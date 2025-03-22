@@ -32,7 +32,9 @@ def main(curs, conn):
 
     while True:
         while not user_session["loggedIn"]:
-            command = input("Would you like to login or create an account?\n")
+            command = input("Would you like to login or create an account?\n" + 
+                            "login - log into an account\n" +
+                            "create account - create an account\n")
             if command == "create account":
                 create_account(user_session, curs, conn)
 
@@ -44,6 +46,7 @@ def main(curs, conn):
                 print("create account - create an account")
 
             while user_session["loggedIn"]:
+                help()
                 command = input("Enter a command:\n")
 
                 if command == "logout":
