@@ -15,7 +15,37 @@ def create_account(user_session, curs, conn):
         curs.execute("SELECT COALESCE(MAX(CAST(SUBSTRING(userId, 2) as INTEGER)), 0) + 1 FROM users")
         new_id = curs.fetchone()[0]
         uid = f"u{new_id}"
-        username = input("Username: ").strip()
+        
+        # ensure unique username
+        while True:
+            
+            username = input("Username: ").strip()
+
+            # check if the username is already taken
+            curs.execute("SELECT 1 FROM users WHERE username = %s", (username,))
+            
+            if curs.fetchone():
+            
+                print("Username already taken. Please choose a different one.")
+            
+            else:
+            
+                break  # username is unique
+        
+        # ensure unique email
+        while True:
+            
+            email = input("Email address: ").strip()
+            curs.execute("SELECT 1 FROM email WHERE email = %s", (email,))
+            
+            if curs.fetchone():
+                
+                print("Email already in use. Please enter a different email.")
+                
+            else:
+                
+                break  # email is unique
+        
         password = input("Password: ").strip()
         firstname = input("First Name: ").strip()
         lastname = input("Last Name: ").strip()

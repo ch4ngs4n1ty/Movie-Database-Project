@@ -40,11 +40,11 @@ def main(curs, conn):
 
             if command == "login":
                 login(user_session, curs, conn)
-                help()
+                if user_session["loggedIn"] == True: 
+                    help()
 
             else:
-                print("login - log into an account")
-                print("create account - create an account")
+                pass
 
             while user_session["loggedIn"]:
                 command = input("Enter a command:\n")
