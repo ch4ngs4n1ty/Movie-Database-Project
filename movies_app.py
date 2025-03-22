@@ -42,8 +42,8 @@ def main(cursor, connection):
                 
                 if command == "logout":
                     
-                    user_session["logged_in"] = False
-                    user_session["userid"] = ""
+                    user_session["loggedIn"] = False
+                    user_session["userId"] = ""
                     user_session["followers"] = 0
                     user_session["following"] = 0
                     user_session["collections"] = 0
@@ -375,12 +375,12 @@ def watch_collection():
     """    
     print("Watch a collection")
 
-    collection_id = input("Enter Collection ID: ").strip()
+    collection_name = input("Enter Collection ID: ").strip()
     
     try:
         
         # gets movieid that are in the collection
-        curs.execute("SELECT movieid FROM partof WHERE collectionid = %s", (collection_id,))
+        curs.execute("SELECT movieid FROM partof WHERE collectionid = %s", (collection_name,))
         movies = curs.fetchall()
         watch_date = datetime.datetime.now()
         
@@ -523,7 +523,7 @@ def search():
 
         sort_order = input("Select order (ASC or DESC): ").strip()
 
-        if sort_order != "ASC" | "DESC":
+        if sort_order != "ASC" and sort_order != "DESC":
 
             print("Must either select ASC or DESC!")
 
@@ -589,7 +589,7 @@ def add_to_collection():
         user_id = user_session["userId"]
 
         # Collection(CollectionID, CollectionName, UserID)
-        curs.execute("""SELECT CollectionID, CollectionName, 
+        curs.execute("""SELECT CollectionID, CollectionName 
                         FROM Collection 
                         WHERE UserID = %s""" , (user_id,))
         
@@ -607,7 +607,7 @@ def add_to_collection():
             
             print(f"ID: {collection[0]}, Collection Name: {collection[1]}")
 
-        collection_index = int(input("Select Collection ID: ").strip()) - 1
+        collection_index = int(input("Select Collection Name: ").strip()) - 1
 
         if collection_index < 0 or collection_index >= len(collection_list):
 
@@ -615,7 +615,7 @@ def add_to_collection():
 
             return
         
-        collection_id = collection_list[collection_index][0]
+        collection_name = collection_list[collection_index][0]
         collection_name = collection_list[collection_index][1]
 
         movie_name = input("Input the Movie Name to add: ").strip()
@@ -637,7 +637,7 @@ def add_to_collection():
         # checks if movie is already in the collection
         curs.execute("""SELECT *
                         FROM PartOf 
-                        WHERE CollectionID = %s AND MovieID = %s""", (collection_id, movie_id))
+                        WHERE CollectionID = %s AND MovieID = %s""", (collection_name, movie_id))
         
         already_exist = curs.fetchone()
 
@@ -647,7 +647,7 @@ def add_to_collection():
 
             return
         
-        curs.execute("INSERT INTO PartOf(MovieID, CollectionID) VALUES (%s, %s)" , (movie_id, collection_id))
+        curs.execute("INSERT INTO PartOf(MovieID, CollectionID) VALUES (%s, %s)" , (movie_id, collection_name))
 
         conn.commit()
 
@@ -693,7 +693,7 @@ def remove_from_collection():
             print("Invalid selection for collection")
             return
         
-        collection_id = collection_list[collection_index][0]
+        collection_name = collection_list[collection_index][0]
         collection_name = collection_list[collection_index][1]
 
         movie_name = input("Input the Movie Name to remove: ").strip()
@@ -713,7 +713,7 @@ def remove_from_collection():
         # Check if the movie exists in the collection
         curs.execute("""SELECT *
                         FROM PartOf 
-                        WHERE CollectionID = %s AND MovieID = %s""", (collection_id, movie_id))
+                        WHERE CollectionID = %s AND MovieID = %s""", (collection_name, movie_id))
         
         movie_in_collection = curs.fetchone()
 
@@ -723,7 +723,7 @@ def remove_from_collection():
 
         # If movie exists in the collection, remove it
         curs.execute("""DELETE FROM PartOf
-                        WHERE CollectionID = %s AND MovieID = %s""", (collection_id, movie_id))
+                        WHERE CollectionID = %s AND MovieID = %s""", (collection_name, movie_id))
 
         conn.commit()
 
@@ -743,24 +743,27 @@ def delete_collection():
     """
     
     print("Deleting a collection")
-    collection_id = input("Enter collection ID: ").strip()
+    collection_name = input("Enter collection name: ").strip()
     
     try:
         
-        curs.execute("SELECT * FROM collection WHERE collectionid = %s", (collection_id,))
-        collection = curs.fetchone()
+        curs.execute('SELECT collectionid FROM collection WHERE collectionname = %s', (collection_name,))
+        collection_id = curs.fetchone()[0]
         
-        if not collection:
-            print("Collection not found")
-            return
+        # curs.execute("SELECT * FROM collection WHERE collectionname = %s", (collection_name,))
+        # collection = curs.fetchone()
+        
+        # if not collection:
+        #     print("Collection not found")
+        #     return
         
         # delete collection from partof table
         curs.execute("DELETE FROM partof WHERE collectionid = %s", (collection_id,))
         
         # delete collection from collection table
-        curs.execute("DELETE FROM collection WHERE collection id = %s", (collection_id,))
+        curs.execute("DELETE FROM collection WHERE collectionname = %s", (collection_name,))
         conn.commit()
-        print(f"Deleted collection {collection_id}")
+        print(f"Deleted collection {collection_name}")
     
     except Exception as e:
         
@@ -855,14 +858,14 @@ def create_collection():
 
         if latest_cid:
 
-            collection_id = f"c{latest_cid + 1}"
+            collection_name = f"c{latest_cid + 1}"
 
         else:
 
-            collection_id = "c1"
+            collection_name = "c1"
 
         #relational table is collection(collectionid, collectionname, userid)
-        curs.execute("INSERT INTO Collection(collectionid, collectionname, userid) VALUES (%s, %s, %s)", (collection_id, collection_name, user_id))
+        curs.execute("INSERT INTO Collection(collectionid, collectionname, userid) VALUES (%s, %s, %s)", (collection_name, collection_name, user_id))
 
         conn.commit()
 
@@ -911,7 +914,7 @@ def name_collection():
 
             return
         
-        collection_id = collection_list[collection_index][0]
+        collection_name = collection_list[collection_index][0]
         collection_name = collection_list[collection_index][1]
 
         new_collection_name = input(f"Current Collection Name: '{collection_name}'. Enter new name: ").strip()
@@ -924,7 +927,7 @@ def name_collection():
 
         curs.execute("""UPDATE Collection
                         SET CollectionName = %s
-                        WHERE CollectionID = %s""", (new_collection_name, collection_id))
+                        WHERE CollectionID = %s""", (new_collection_name, collection_name))
 
         conn.commit()
 
