@@ -9,8 +9,6 @@ user_session = {
     "following": 0,
     "collections": 0
     }
-curs
-conn
 
 def main(cursor, connection):
     
@@ -589,7 +587,7 @@ def add_to_collection():
         user_id = user_session["userId"]
 
         # Collection(CollectionID, CollectionName, UserID)
-        curs.execute("""SELECT CollectionID, CollectionName, 
+        curs.execute("""SELECT CollectionID, CollectionName
                         FROM Collection 
                         WHERE UserID = %s""" , (user_id,))
         
@@ -607,22 +605,32 @@ def add_to_collection():
             
             print(f"ID: {collection[0]}, Collection Name: {collection[1]}")
 
-        collection_index = int(input("Select Collection ID: ").strip()) - 1
+        collection_id = input("Select Collection ID: ").strip()
 
-        if collection_index < 0 or collection_index >= len(collection_list):
+        valid_collection_ids = [collection[0] for collection in collection_list]
 
-            print("Invalid selection for collection")
+        if collection_id not in valid_collection_ids:
 
+            print("Invalid Collection ID. Make sure it's like 'c1', 'c2', ...")
+            
             return
+
+        for collection in collection_list:
+
+            if collection[0] == collection_id:
+
+                collection_name = collection[1]
+
+                break
         
-        collection_id = collection_list[collection_index][0]
-        collection_name = collection_list[collection_index][1]
+        #collection_id = collection_list[collection_index][0]
+        #collection_name = collection_list[collection_id][1]
 
         movie_name = input("Input the Movie Name to add: ").strip()
 
-        curs.execute("""SELECT MovieID
-                        FROM Movie
-                        WHERE MovieName = %s""", (movie_name,))
+        curs.execute("""SELECT movieid
+                        FROM movie
+                        WHERE title = %s""", (movie_name,))
         
         movie = curs.fetchone()
 
