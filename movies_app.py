@@ -40,8 +40,8 @@ def main(cursor, connection):
                 
                 if command == "logout":
                     
-                    user_session["logged_in"] = False
-                    user_session["userid"] = ""
+                    user_session["loggedIn"] = False
+                    user_session["userId"] = ""
                     user_session["followers"] = 0
                     user_session["following"] = 0
                     user_session["collections"] = 0
@@ -49,28 +49,40 @@ def main(cursor, connection):
                     
                 elif command == "follow":
                     follow()
+                    help()
                 elif command == "unfollow":
                     unfollow()
+                    help()
                 elif command == "watch movie":
                     watch_movie()
+                    help()
                 elif command == "watch collection":
                     watch_collection()
+                    help()
                 elif command == "rate":
                     rate_movie()
+                    help()
                 elif command == "search":
                     search()
+                    help()
                 elif command == "add":
                     add_to_collection()
+                    help()
                 elif command == "remove":
                     remove_from_collection()
+                    help()
                 elif command == "delete collection":
                     delete_collection()
+                    help()
                 elif command == "view collections":
                     view_collections()
+                    help()
                 elif command == "create collection":
                     create_collection()
+                    help()
                 elif command == "name collection":
                     name_collection()
+                    help()
                 else:
                     print("Invalid command")
                     help()
@@ -81,7 +93,7 @@ def help():
 logout - logout of account
 follow - follow a user
 unfollow - unfollow a user
-watch movie - watch a mmovie
+watch movie - watch a movie
 watch collection - watch a collection
 rate - rate a movie
 search - search for a movie or user
@@ -113,7 +125,7 @@ def create_account():
         password = input("Password: ").strip()
         firstname = input("First Name: ").strip()
         lastname = input("Last Name: ").strip()
-        region = input("RegionL ").strip()
+        region = input("Region: ").strip()
         dob = input("Date of birth(YYYY-MM-DD): ").strip()
         email = input("Email address: ").strip()
         creation_date = datetime.datetime.now()
@@ -123,6 +135,8 @@ def create_account():
         curs.execute("INSERT INTO users(userid, username, firstname, lastname, region, dob, password, creationdate) VALUES (%s, %s, %s, %s, %s, %s, %s, %s)",
                      (uid, username, firstname, lastname, region, dob, password, creation_date))
         
+        curs.execute('INSERT INTO email VALUES (%s, %s)', (uid, email))
+
         conn.commit()
 
         print("Account has been created\n")
@@ -778,24 +792,27 @@ def delete_collection():
     """
     
     print("Deleting a collection")
-    collection_id = input("Enter collection ID: ").strip()
+    collection_name = input("Enter collection name: ").strip()
     
     try:
         
-        curs.execute("SELECT * FROM collection WHERE collectionid = %s", (collection_id,))
-        collection = curs.fetchone()
+        curs.execute('SELECT collectionid FROM collection WHERE collectionname = %s', (collection_name,))
+        collection_id = curs.fetchone()[0]
         
-        if not collection:
-            print("Collection not found")
-            return
+        # curs.execute("SELECT * FROM collection WHERE collectionname = %s", (collection_name,))
+        # collection = curs.fetchone()
+        
+        # if not collection:
+        #     print("Collection not found")
+        #     return
         
         # delete collection from partof table
         curs.execute("DELETE FROM partof WHERE collectionid = %s", (collection_id,))
         
         # delete collection from collection table
-        curs.execute("DELETE FROM collection WHERE collection id = %s", (collection_id,))
+        curs.execute("DELETE FROM collection WHERE collectionname = %s", (collection_name,))
         conn.commit()
-        print(f"Deleted collection {collection_id}")
+        print(f"Deleted collection {collection_name}")
     
     except Exception as e:
         
