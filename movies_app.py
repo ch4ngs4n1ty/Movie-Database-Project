@@ -429,7 +429,7 @@ def search():
 
         sort_order = input("Select order (ASC or DESC): ").strip()
 
-        if sort_order != "ASC" | "DESC":
+        if sort_order != "ASC" | "DESC": # type: ignore
 
             print("Must either select ASC or DESC!")
 
