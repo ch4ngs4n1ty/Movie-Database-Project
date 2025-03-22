@@ -762,24 +762,27 @@ def delete_collection():
     """
     
     print("Deleting a collection")
-    collection_id = input("Enter collection ID: ").strip()
+    collection_name = input("Enter collection name: ").strip()
     
     try:
         
-        curs.execute("SELECT * FROM collection WHERE collectionid = %s", (collection_id,))
-        collection = curs.fetchone()
+        curs.execute('SELECT collectionid FROM collection WHERE collectionname = %s', (collection_name,))
+        collection_id = curs.fetchone()[0]
         
-        if not collection:
-            print("Collection not found")
-            return
+        # curs.execute("SELECT * FROM collection WHERE collectionname = %s", (collection_name,))
+        # collection = curs.fetchone()
+        
+        # if not collection:
+        #     print("Collection not found")
+        #     return
         
         # delete collection from partof table
         curs.execute("DELETE FROM partof WHERE collectionid = %s", (collection_id,))
         
         # delete collection from collection table
-        curs.execute("DELETE FROM collection WHERE collection id = %s", (collection_id,))
+        curs.execute("DELETE FROM collection WHERE collectionname = %s", (collection_name,))
         conn.commit()
-        print(f"Deleted collection {collection_id}")
+        print(f"Deleted collection {collection_name}")
     
     except Exception as e:
         
