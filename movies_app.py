@@ -498,8 +498,8 @@ def search():
         "1": "LOWER(m.title)",   
         "2": "LOWER(ro.releasedate)",
         "3": "LOWER(CONCAT(mp.firstname, ' ', mp.lastname))",
-        "4": "LOWER(m.studio)",
-        "5": "LOWER(m.genre)"
+        "4": "LOWER(s.studio)",
+        "5": "LOWER(g.genre)"
     }
 
     search_by = input("Select (1 - 5): ").strip()
@@ -525,47 +525,52 @@ def search():
     sort_options = {
 
         "1": "m.title",
-        "2": "m.studio",
-        "3": "m.genre",
+        "2": "s.studio",
+        "3": "g.genre",
         "4": "ro.releasedate"
 
     }
-
+  
     if sort_by:
 
         sort_order = input("Select order (ASC or DESC): ").strip()
 
-        if sort_order != "ASC" | "DESC":
+        if sort_order not in ["ASC", "DESC"]:
 
             print("Must either select ASC or DESC!")
 
             return
 
         sort_column = sort_options[sort_by]
-        selected_order = (f"ORDER BY {sort_column} {sort_order}")
+        selected_order = (f"{sort_column} {sort_order}")
 
     else:
 
         selected_order = "ORDER BY m.title ASC, ro.releasedate ASC"
 
-    curs.execute("""SELECT m.title, 
-                    mp.firstname,
-                    mp.lastname,
-                    d.firstname,
-                    d.lastname,
-                    m.duration,
-                    m.mpaarating,
-                    ROUND(AVG(r.starrating), 1) AS user_rating
-                    FROM Movie m
-                    LEFT JOIN StarsIn si ON m.movieid = si.movieid
-                    LEFT JOIN MoviePeople mp ON si.personid = mp.personid
-                    LEFT JOIN Directs dir on m.movieid = dir.movieid
-                    LEFT JOIN MoviePeople p on dir.personid = p.personid
-                    LEFT JOIN Rates r on m.movieid = r.movieid 
-                    LEFT JOIN ReleaseOn ro on m.movieid = ro.movieid
-                    WHERE {selected_search} LIKE %s
-                    GROUP BY m.movieid, mp.firstname, mp.lastname, d.firstname, d.lastname, m.duration, m.mpaarating
-                    ORDER BY {selected_order};""", (val,)) 
+    curs.execute(f"""
+    SELECT m.title, 
+           mp.firstname,
+           mp.lastname,
+           d.firstname AS director_firstname,
+           d.lastname AS director_lastname,
+           m.duration,
+           m.mpaarating,
+           s.studioname,  -- Assuming the studio name is stored in the 'studios' table
+           g.genrename,   -- Assuming the genre name is stored in the 'genres' table
+           ROUND(AVG(r.starrating), 1) AS user_rating
+        FROM Movie m
+        LEFT JOIN starsin si ON m.movieid = si.movieid
+        LEFT JOIN moviepeople mp ON si.personid = mp.personid
+        LEFT JOIN directs dir ON m.movieid = dir.movieid
+        LEFT JOIN moviepeople p ON dir.personid = p.personid
+        LEFT JOIN rates r ON m.movieid = r.movieid 
+        LEFT JOIN releasedon ro ON m.movieid = ro.movieid
+
+        WHERE {selected_search} LIKE %s
+        GROUP BY m.movieid, mp.firstname, mp.lastname, d.firstname, d.lastname, m.duration, m.mpaarating, s.studioname, g.genrename
+        ORDER BY {selected_order};
+        """, (val,))
     
     result_list = curs.fetchall()
 
