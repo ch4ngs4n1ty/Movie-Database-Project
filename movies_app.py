@@ -393,7 +393,7 @@ def watch_collection():
 def rate_movie():
     
     print("Rate movie")
-    movie_id = int(input("Enter movie ID: "))
+    movie_id = input("Enter movie ID: ")
     rating = round(float(input("Enter rating: ")))
     
     # gets the movie with the movieid
