@@ -5,10 +5,11 @@ import datetime
 user_session = {
     "loggedIn": False,
     "userId": None,
+    "userIndex": [],
     "followers": 0,
     "following": 0,
     "collections": 0
-}
+    }
 
 def main(cursor, connection):
     
@@ -24,10 +25,12 @@ def main(cursor, connection):
             if command == "create account":
                 
                 create_account()
+                user_session["loggedIn"] = True
                 
             if command == "login":
                 
                 login()
+                user_session["loggedIn"] = True
                 
             else:
                 
@@ -42,6 +45,7 @@ def main(cursor, connection):
                     
                     user_session["logged_in"] = False
                     user_session["userid"] = ""
+                    user_session["userIndex"] = []
                     user_session["followers"] = 0
                     user_session["following"] = 0
                     user_session["collections"] = 0
@@ -95,7 +99,14 @@ name collection - name a collection
     print(help_msg)
     
 def create_account():
-    
+    """  
+    Allow users to create new accounts.  
+
+    This function lets users create an account with a username, password, first and last name,  
+    region, date of birth, and email address. The system will also record the date and time  
+    of account creation.  
+    """
+
     try:
         
         # gets the next available userId from users
@@ -112,22 +123,35 @@ def create_account():
         creation_date = datetime.datetime.now()
         
         # adds the users account to users
+        # users(userid, username, firstname, lastname, region, dob, password, creationdate)
         curs.execute("INSERT INTO users(userid, username, firstname, lastname, region, dob, password, creationdate) VALUES (%s, %s, %s, %s, %s, %s, %s, %s)",
                      (uid, username, firstname, lastname, region, dob, password, creation_date))
+        
         conn.commit()
-        print("Account has been created \n")
+
+        print("Account has been created\n")
+
         login()
         
     except Exception as e:
         
         print("Error occurred creating account", e)
+
         conn.rollback()
 
-
 def login():
+    """  
+    After creating an account, users can log in.  
 
-    username = input("Username: ").strip()
-    password = input("Password: ").strip()
+    This function prompts the user for their username and password.  
+    The system then checks if the entered password matches the one in the database.  
+    If successful, it updates the access time.  
+    """
+
+    print("Login your account")
+
+    username = input("Username: ")
+    password = input("Password: ")
 
     try:
 
@@ -143,44 +167,40 @@ def login():
 
             access_date = datetime.datetime.now()
 
-            #relational table is accessdates(userid), accessdate)
-            #curs.execute("INSERT INTO accessdates(userid, accessdate) VALUES (%s, %s)", (user[0], access_date))
+            user_id = user[0]
 
-            curs.execute("SELECT 1 FROM accessdates WHERE userid = %s", (user[0],))
+            #accessdates(userid, accessdate)
+            curs.execute("SELECT 1 FROM accessdates WHERE userid = %s", (user_id,))
 
-            existing_entry = curs.fetchone()
+            existing_date = curs.fetchone()
 
-            if existing_entry:  
+            #if user contains an access date already, it updates automatically to current access date
+            if existing_date:  
 
                 curs.execute("""
                     UPDATE accessdates 
                     SET accessdate = %s 
-                    WHERE userid = %s """, (access_date, user[0]))
+                    WHERE userid = %s """, (access_date, user_id))
                 
                 #print(f"Access date updated for {username}!")
 
             else:  
 
+                #if user is new and doesn't have the access date
+
                 curs.execute("""
                     INSERT INTO accessdates(userid, accessdate)
                     VALUES (%s, %s)""", (user[0], access_date))
                 
-            user_session["userId"] = user[0]
-            user_session["username"] = user[1]
-            user_session["loggedIn"] = True
-            
             print(f"Hello, {username}!")
+
             help()
 
             conn.commit()
 
         else: 
 
-            user_session["userId"] = ""
-            user_session["username"] = ""
-            user_session["loggedIn"] = False
-            print("Invalid username or password!")
-            
+            print("Invalid username or password")
 
     except Exception as e:
 
@@ -189,8 +209,16 @@ def login():
         conn.rollback()  
 
 def follow():
+    """
+    Allows the user to follow another user.  
+
+    This function asks the user for another user's email  
+    to send a follow request. The system notifies the user  
+    if the followee cannot be found or if they are already following them.  
+    """
     
     print("Follow a user")
+
     user_email = input("Enter users email: ").strip()
     
     try:
@@ -206,13 +234,14 @@ def follow():
         
         followed_id = user_id[0]
         
-        # Check if the user is already being followed
+        # check if the user is already being followed
         curs.execute("SELECT 1 FROM follows WHERE follower = %s AND followee = %s", (user_session["userId"], followed_id))
         existing_follow = curs.fetchone()
 
         if existing_follow:
         
             print(f"You are already following {user_email}")
+
             return
         
         # gets username of the userid from users table
@@ -227,7 +256,8 @@ def follow():
         followed_username = user_data[0]
         curs.execute("INSERT INTO follows VALUES (%s, %s)", (user_session["userId"], followed_id))
         conn.commit()
-        print(f"You are follwing {followed_username}")
+
+        print(f"You are following {followed_username}")
         
     except Exception as e:
         
@@ -235,6 +265,13 @@ def follow():
         conn.rollback()
 
 def unfollow():
+    """
+    Allows the user to unfollow another user.  
+
+    This function asks the user for the other user's email.  
+    The system checks if the user exists and notifies them  
+    if no account is found or if they are not following the user.      
+    """
     
     print("Unfollow a user")
     user_email = input("Enter users email: ").strip()
@@ -252,7 +289,7 @@ def unfollow():
         
         followed_id = user_id[0]
         
-        # Check if the user is already being followed
+        # check if the user is already being followed
         curs.execute("SELECT 1 FROM follows WHERE follower = %s AND followee = %s", (user_session["userId"], followed_id))
         existing_follow = curs.fetchone()
 
@@ -292,7 +329,11 @@ def unfollow():
         conn.rollback()
 
 def watch_movie():
+    """
     
+    
+    """
+
     print("Watch a movie")
     movie_id = input("Enter Movie ID: ").strip()
     
@@ -322,6 +363,7 @@ def watch_movie():
 def watch_collection():
     
     print("Watch a collection")
+
     collection_id = input("Enter Collection ID: ").strip()
     
     try:
@@ -657,38 +699,31 @@ def delete_collection():
     
 def view_collections():
 
-    user_id = user_session["userId"]
-    
+    user_id = user_session["userid"]
+
     if not user_id:
         
         print("Need to be logged in to view collection")
         return
 
-    # curs.execute("""SELECT c.collectionname, 
-    #              COUNT(m.movieid) AS num_movies,
-    #              TO_CHAR(MAKE_INTERVAL(mins => SUM(duration)), 'HH24:MI') AS total_length
-    #              FROM collection c
-    #              LEFT JOIN movie m ON c.movieid = m.movieid
-    #              WHERE c.userid = %s
-    #              GROUP BY c.collectionname
-    #              ORDER BY c.collectionname ASC""", (user_id,))
-    
-    curs.execute('SELECT collectionname FROM collection WHERE userid = %s', (user_id,))
-    
-    a = [row[0] for row in curs.fetchall()]
-    
-    for i in range(0, len(a)): 
-        print(a[i])
-    
-    # list_collections = conn.fetchall()
+    curs.execute("""SELECT c.collectionname, 
+                 COUNT(m.movieid) AS num_movies,
+                 TO_CHAR(MAKE_INTERVAL(mins => SUM(duration)), 'HH24:MI') AS total_length
+                 FROM collection c
+                 LEFT JOIN movie m ON c.movieid = m.movieid
+                 WHERE c.userid = %s
+                 GROUP BY c.collectionname
+                 ORDER BY c.collectionname ASC""", (user_id,))
+                
+    list_collections = conn.fetchall()
 
-    # for collect in list_collections:
+    for collect in list_collections:
 
-    #     name = collect[0]
-    #     num_movies = collect[1]
-    #     total_length = collect[2]
+        name = collect[0]
+        num_movies = collect[1]
+        total_length = collect[2]
 
-    #     print(f"Collection Name: '{name}'  Number Of Movies: '{num_movies}' Total Length Of Movies In Collection: '{total_length}'")
+        print(f"Collection Name: '{name}'  Number Of Movies: '{num_movies}' Total Length Of Movies In Collection: '{total_length}'")
 
 #user will be able to create collection of movies
 def create_collection():
@@ -703,7 +738,6 @@ def create_collection():
     collection_name = new_collection.strip()
 
     user_id = user_session["userId"]
-    print(user_id)
 
     try:
         
