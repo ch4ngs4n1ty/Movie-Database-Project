@@ -184,10 +184,17 @@ def delete_collection(user_session, curs, conn):
     or if there is an error during the deletion process.  
     """
     
-    print("Deleting a collection")
+    print("Which collection do you want to delete?")
+    view_collections(user_session, curs, conn)
     collection_name = input("Enter collection name: ").strip()
     
     try:
+        curs.execute('SELECT collectionname FROM collection WHERE userid = %s AND collectionname = %s', (user_session["userId"], collection_name))
+        collectionname_check = curs.fetchone()
+
+        if (collectionname_check is None): 
+            print(f"No collection with name '{collection_name}'")
+            return
         
         curs.execute('SELECT collectionid FROM collection WHERE collectionname = %s', (collection_name,))
         collection_id = curs.fetchone()[0]

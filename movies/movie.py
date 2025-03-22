@@ -16,7 +16,7 @@ def watch_movie(user_session, curs, conn):
         
         # checks if movie exists in database
         curs.execute("SELECT * FROM movie WHERE movieid = %s", (movie_id,))
-        movie = curs.fetchone()
+        movie = curs.fetchone()[0]
         
         if not movie:
             print("Movie not found")
@@ -65,29 +65,39 @@ def watch_collection(user_session, curs, conn):
 
             print(f"ID: {collection[0]}, Collection Name: {collection[1]}")
 
-        collection_id = input("Enter Collection ID: ").strip()
+        collection_name = input("Enter Collection Name: ").strip()
 
+        # gets collectionid from collectionname
+        curs.execute("SELECT collectionid FROM collection WHERE collectionname ILIKE %s AND userid = %s"
+                     , (collection_name, user_session["userId"]))
+        collection_id = curs.fetchone()[0]
+        
         # gets movieid that are in the collection
-
         curs.execute("SELECT movieid FROM partof WHERE collectionid = %s", (collection_id,))
-        movies = curs.fetchall()
+        movie_ids = curs.fetchall()
         watch_date = datetime.datetime.now()
         
         # checks if there are movies in the collection
-        if not movies:
+        if not movie_ids:
             print("No movies in collection")
             return
         
+        movie_list = ""
         # creates a watches entry for each movie in the collection
-        for movie in movies:
+        for movie in movie_ids:
             
             movie_id = movie[0]
             curs.execute("INSERT INTO watches(userid, movieid, datetimewatched) VALUES (%s, %s, %s)",
                          (user_session["userId"], movie_id, watch_date))
             
+            # adds movie name to a list to print
+            curs.execute("SELECT title FROM movie WHERE movieid = %s", (movie_id,))         
+            movie_list += "'" + curs.fetchone()[0] + "' "
+            
+            
         conn.commit()
 
-        print(f"Watched {collection_list}")
+        print(f"Watched {movie_list}")
         
     except Exception as e:
         
@@ -108,7 +118,7 @@ def rate_movie(user_session, curs, conn):
     try:
         
         # Search for movies by title
-        curs.execute("SELECT movieid, title FROM movie WHERE title ILIKE %s", (movie_name,))
+        curs.execute("SELECT movieid FROM movie WHERE title ILIKE %s", (movie_name,))
         movies = curs.fetchone()
 
         if not movies:
