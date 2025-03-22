@@ -481,12 +481,12 @@ def search():
     }
 
     search_options = {
-        "1": "LOWER(m.title)",   
-        "2": "LOWER(ro.releasedate)",
-        "3": "LOWER(CONCAT(mp.firstname, ' ', mp.lastname))",
-        "4": "LOWER(s.studio)",
-        "5": "LOWER(g.genre)"
-    }
+    "1": "LOWER(m.title)",   
+    "2": "LOWER(ro.releasedate)",
+    "3": "LOWER(CONCAT(mp.firstname, ' ', mp.lastname))",  
+    "4": "LOWER(s.studioname)",  
+    "5": "LOWER(g.genrename)"   
+}
 
     search_by = input("Select (1 - 5): ").strip()
 
@@ -498,7 +498,7 @@ def search():
 
     search_value = input(f"Enter {selected_prompt}: ").strip()       
 
-    val = f"%{search_value.lower()}" 
+    #val = f"%{search_value.lower()}" 
 
     print("Sort Results By:")
     print("1. Movie Name")
@@ -509,12 +509,10 @@ def search():
     sort_by = input("Select (1 - 4): ").strip()
 
     sort_options = {
-
         "1": "m.title",
-        "2": "s.studio",
-        "3": "g.genre",
+        "2": "s.studioname",  
+        "3": "g.genrename",   
         "4": "ro.releasedate"
-
     }
   
     if sort_by:
@@ -534,47 +532,60 @@ def search():
 
         selected_order = "ORDER BY m.title ASC, ro.releasedate ASC"
 
-    curs.execute(f"""
-    SELECT m.title, 
-           mp.firstname,
-           mp.lastname,
-           d.firstname AS director_firstname,
-           d.lastname AS director_lastname,
-           m.duration,
-           m.mpaarating,
-           s.studioname,  -- Assuming the studio name is stored in the 'studios' table
-           g.genrename,   -- Assuming the genre name is stored in the 'genres' table
-           ROUND(AVG(r.starrating), 1) AS user_rating
-        FROM Movie m
+    query = f"""
+            SELECT 
+            m.title AS movie_name,
+        CONCAT(mp.firstname, ' ', mp.lastname) AS cast_members,
+        CONCAT(dp.firstname, ' ', dp.lastname) AS director_name,
+        m.duration AS movie_duration,
+        m.mpaarating AS mpaa_rating,
+        ROUND(AVG(r.starrating), 1) AS user_rating,
+        s.studioname AS studio,
+        g.genrename AS genre,
+        EXTRACT(YEAR FROM ro.releasedate) AS release_year
+        FROM 
+        Movie m
         LEFT JOIN starsin si ON m.movieid = si.movieid
         LEFT JOIN moviepeople mp ON si.personid = mp.personid
         LEFT JOIN directs dir ON m.movieid = dir.movieid
-        LEFT JOIN moviepeople p ON dir.personid = p.personid
+        LEFT JOIN moviepeople dp ON dir.personid = dp.personid
         LEFT JOIN rates r ON m.movieid = r.movieid 
+        LEFT JOIN created c ON m.movieid = c.movieid
+        LEFT JOIN studios s ON c.studioid = s.studioid
+        LEFT JOIN contains co ON m.movieid = co.movieid
+        LEFT JOIN genre g ON co.genreid = g.genreid
         LEFT JOIN releasedon ro ON m.movieid = ro.movieid
+        WHERE 
+        {selected_search} LIKE %s
+        GROUP BY 
+        m.movieid, m.title, mp.firstname, mp.lastname, dp.firstname, dp.lastname, m.duration, m.mpaarating, s.studioname, g.genrename, ro.releasedate
+        ORDER BY 
+        {selected_order};
+        """
 
-        WHERE {selected_search} LIKE %s
-        GROUP BY m.movieid, mp.firstname, mp.lastname, d.firstname, d.lastname, m.duration, m.mpaarating, s.studioname, g.genrename
-        ORDER BY {selected_order};
-        """, (val,))
+    val = f"%{search_value.lower()}%"  
+
+    curs.execute(query, (val,))
     
     result_list = curs.fetchall()
 
     if not result_list:
+
         print("No results found")
         return
 
-    for result in result_list:
-
-        title, cast_member, director, length, mpaa_rating, user_rating, release_date = result
-
-        print(f"Title: {title}")
-        print(f"Cast: {cast_member}")
-        print(f"Director: {director}")
-        print(f"Length: {length}")
+    for row in result_list:
+        movie_name, cast_members, director_name, movie_duration, mpaa_rating, user_rating, studio, genre, release_year = row
+        print(f"Movie: {movie_name}")
+        print(f"Cast: {cast_members}")
+        print(f"Director: {director_name}")
+        print(f"Duration: {movie_duration} minutes")
         print(f"MPAA Rating: {mpaa_rating}")
         print(f"User Rating: {user_rating}")
-        print(f"Release Date: {release_date}")
+        print(f"Studio: {studio}")
+        print(f"Genre: {genre}")
+        print(f"Release Year: {release_year}")
+        print("-" * 40)
 
 
 def add_to_collection():
