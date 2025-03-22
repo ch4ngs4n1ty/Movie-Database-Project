@@ -5,11 +5,12 @@ import datetime
 user_session = {
     "loggedIn": False,
     "userId": None,
-    "userIndex": [],
     "followers": 0,
     "following": 0,
     "collections": 0
     }
+curs = None
+conn = None
 
 def main(cursor, connection):
     
@@ -25,12 +26,10 @@ def main(cursor, connection):
             if command == "create account":
                 
                 create_account()
-                user_session["loggedIn"] = True
                 
             if command == "login":
                 
                 login()
-                user_session["loggedIn"] = True
                 
             else:
                 
@@ -45,7 +44,6 @@ def main(cursor, connection):
                     
                     user_session["logged_in"] = False
                     user_session["userid"] = ""
-                    user_session["userIndex"] = []
                     user_session["followers"] = 0
                     user_session["following"] = 0
                     user_session["collections"] = 0
@@ -71,9 +69,9 @@ def main(cursor, connection):
                     delete_collection()
                 elif command == "view collections":
                     view_collections()
-                elif command == "create_collection":
+                elif command == "create collection":
                     create_collection()
-                elif command == "name_collection":
+                elif command == "name collection":
                     name_collection()
                 else:
                     print("Invalid command")
@@ -99,7 +97,14 @@ name collection - name a collection
     print(help_msg)
     
 def create_account():
-    
+    """  
+    Allow users to create new accounts.  
+
+    This function lets users create an account with a username, password, first and last name,  
+    region, date of birth, and email address. The system will also record the date and time  
+    of account creation.  
+    """
+
     try:
         
         # gets the next available userId from users
@@ -116,19 +121,32 @@ def create_account():
         creation_date = datetime.datetime.now()
         
         # adds the users account to users
+        # users(userid, username, firstname, lastname, region, dob, password, creationdate)
         curs.execute("INSERT INTO users(userid, username, firstname, lastname, region, dob, password, creationdate) VALUES (%s, %s, %s, %s, %s, %s, %s, %s)",
                      (uid, username, firstname, lastname, region, dob, password, creation_date))
+        
         conn.commit()
-        print("Account has been created \n")
+
+        print("Account has been created\n")
+
         login()
         
     except Exception as e:
         
         print("Error occurred creating account", e)
+
         conn.rollback()
 
-
 def login():
+    """  
+    After creating an account, users can log in.  
+
+    This function prompts the user for their username and password.  
+    The system then checks if the entered password matches the one in the database.  
+    If successful, it updates the access time.  
+    """
+
+    print("Login your account")
 
     username = input("Username: ")
     password = input("Password: ")
@@ -147,40 +165,44 @@ def login():
 
             access_date = datetime.datetime.now()
 
-            #relational table is accessdates(userid), accessdate)
-            #curs.execute("INSERT INTO accessdates(userid, accessdate) VALUES (%s, %s)", (user[0], access_date))
+            user_id = user[0]
 
-            curs.execute("SELECT 1 FROM accessdates WHERE userid = %s", (user[0],))
+            #accessdates(userid, accessdate)
+            curs.execute("SELECT 1 FROM accessdates WHERE userid = %s", (user_id,))
 
-            existing_entry = curs.fetchone()
+            existing_date = curs.fetchone()
 
-            if existing_entry:  
+            #if user contains an access date already, it updates automatically to current access date
+            if existing_date:  
 
                 curs.execute("""
                     UPDATE accessdates 
                     SET accessdate = %s 
-                    WHERE userid = %s """, (access_date, user[0]))
+                    WHERE userid = %s """, (access_date, user_id))
                 
                 #print(f"Access date updated for {username}!")
 
             else:  
 
+                #if user is new and doesn't have the access date
+
                 curs.execute("""
                     INSERT INTO accessdates(userid, accessdate)
                     VALUES (%s, %s)""", (user[0], access_date))
-                
+            
             user_session["userId"] = user[0]
             user_session["username"] = user[1]
             user_session["loggedIn"] = True
             
             print(f"Hello, {username}!")
+
             help()
 
             conn.commit()
 
         else: 
 
-            print("Invalid username or password!")
+            print("Invalid username or password")
 
     except Exception as e:
 
@@ -189,8 +211,16 @@ def login():
         conn.rollback()  
 
 def follow():
+    """
+    Allows the user to follow another user.  
+
+    This function asks the user for another user's email  
+    to send a follow request. The system notifies the user  
+    if the followee cannot be found or if they are already following them.  
+    """
     
     print("Follow a user")
+
     user_email = input("Enter users email: ").strip()
     
     try:
@@ -206,13 +236,14 @@ def follow():
         
         followed_id = user_id[0]
         
-        # Check if the user is already being followed
+        # check if the user is already being followed
         curs.execute("SELECT 1 FROM follows WHERE follower = %s AND followee = %s", (user_session["userId"], followed_id))
         existing_follow = curs.fetchone()
 
         if existing_follow:
         
             print(f"You are already following {user_email}")
+
             return
         
         # gets username of the userid from users table
@@ -227,7 +258,8 @@ def follow():
         followed_username = user_data[0]
         curs.execute("INSERT INTO follows VALUES (%s, %s)", (user_session["userId"], followed_id))
         conn.commit()
-        print(f"You are follwing {followed_username}")
+
+        print(f"You are following {followed_username}")
         
     except Exception as e:
         
@@ -235,6 +267,13 @@ def follow():
         conn.rollback()
 
 def unfollow():
+    """
+    Allows the user to unfollow another user.  
+
+    This function asks the user for the other user's email.  
+    The system checks if the user exists and notifies them  
+    if no account is found or if they are not following the user.      
+    """
     
     print("Unfollow a user")
     user_email = input("Enter users email: ").strip()
@@ -252,7 +291,7 @@ def unfollow():
         
         followed_id = user_id[0]
         
-        # Check if the user is already being followed
+        # check if the user is already being followed
         curs.execute("SELECT 1 FROM follows WHERE follower = %s AND followee = %s", (user_session["userId"], followed_id))
         existing_follow = curs.fetchone()
 
@@ -292,7 +331,14 @@ def unfollow():
         conn.rollback()
 
 def watch_movie():
-    
+    """
+    Allows the user to watch a movie individually.  
+
+    This function lets the user select a movie  
+    to watch. When they access the movie, the system  
+    records the date and time of access.  
+    """
+
     print("Watch a movie")
     movie_id = input("Enter Movie ID: ").strip()
     
@@ -320,8 +366,15 @@ def watch_movie():
         conn.rollback()
     
 def watch_collection():
-    
+    """
+    Allows the user to watch an entire collection of movies.  
+
+    This function lets the user select a collection to watch,  
+    playing all movies in that collection. The system records  
+    the date and time of access while watching.
+    """    
     print("Watch a collection")
+
     collection_id = input("Enter Collection ID: ").strip()
     
     try:
@@ -349,29 +402,70 @@ def watch_collection():
         conn.rollback()
 
 def rate_movie():
-    
+    """
+    Allows users to rate a movie.  
+
+    This function lets the user provide a star rating (1-5)  
+    for a specific movie. After rating, the rating is saved  
+    to the movie's rating record.  
+    """
     print("Rate movie")
-    movie_id = int(input("Enter movie ID: "))
-    rating = round(float(input("Enter rating: ")))
+    movie_name = input("Enter movie title: ").strip()
     
-    # gets the movie with the movieid
-    curs.execute("SELECT * FROM movie WHERE movieId = %s", (movie_id,))
-    movie = curs.fetchone()
-    
-    if movie:
+    try:
         
-        try:
+        # Search for movies by title
+        curs.execute("SELECT movieid, title FROM movie WHERE title ILIKE %s", (movie_name,))
+        movies = curs.fetchone()
+
+        if not movies:
+            
+            print("No movie found with that title.")
+            return
+        
+        movie_id = movies[0]
+        rating = round(float(input("Enter rating(1-5): ")))
+
+        # ensure rating within valid range
+        if rating < 1 or rating > 5:
+             
+            print("Invalid rating! Please enter a number between 1 and 5.")
+            return
+
+        # Check if the user has already rated this movie
+        curs.execute("SELECT * FROM rates WHERE movieid = %s AND userid = %s", 
+                     (movie_id, user_session["userId"]))
+        existing_rating = curs.fetchone()
+
+        if existing_rating:
+            
+            # Update existing rating
+            curs.execute("UPDATE rates SET starrating = %s WHERE movieid = %s AND userid = %s", 
+                         (str(rating), movie_id, user_session["userId"]))
+            print("Rating updated")
+            
+        else:
             
             # adds the movie rating into rates table
-            curs.execute("INSERT INTO rates VALUES (%s, %s, %s)", (user_session["userId"], movie_id, rating))
-            print("Rating successful")
+            curs.execute("INSERT INTO rates(movieid, userid, starrating) VALUES (%s, %s, %s)", 
+                         (movie_id, user_session["userId"], str(rating)))
+            print("Rating submitted")
         
-        except Exception as e:
+        conn.commit()
         
-            print("Error occured rating movie")
-            conn.rollback
+    except Exception as e:
+        
+        print("Error occured rating movie")
+        conn.rollback
 
 def search():
+    """
+    Allows users to search movies by name, release date, cast members, studio, or genre.  
+
+    This function lets users search for movies in the database based on their chosen criteria.  
+    The system returns a list of movies sorted alphabetically (ascending) by movie name and release date.  
+    Users can also choose to sort the list in ascending or descending order.  
+    """
 
     print("Search Movies By:")
     print("1. Name")
@@ -481,6 +575,12 @@ def search():
 
 
 def add_to_collection():
+    """
+    Allows users to add movies to a collection.  
+
+    This function lets users select a movie they want to add to one of their created collections.  
+    The system will notify users if the movie is not found in the database or if they have no collections.  
+    """
 
     print("Adding a movie to your collection")
 
@@ -560,6 +660,12 @@ def add_to_collection():
         conn.rollback()
 
 def remove_from_collection():
+    """  
+    Allows users to remove movies from a collection.  
+
+    This function lets users view their collections,  
+    select a collection, and see the movies within it.  
+    """
 
     print("Removing a movie from your collection")
 
@@ -628,6 +734,13 @@ def remove_from_collection():
         conn.rollback()
 
 def delete_collection():
+    """
+    Allows users to delete an entire collection.  
+
+    This function lets users select the collection ID they want to delete.  
+    The system will notify users if the selected collection doesn't exist  
+    or if there is an error during the deletion process.  
+    """
     
     print("Deleting a collection")
     collection_id = input("Enter collection ID: ").strip()
@@ -656,35 +769,55 @@ def delete_collection():
 
     
 def view_collections():
+    """
+    Allows users to view a list of all their collections.  
 
-    user_id = user_session["userid"]
+    This function returns a list of all user-created collections,  
+    sorted by name in ascending order. It also displays the number of  
+    movies in each collection and the total length of movies in the collection.  
+    """
+
+    user_id = user_session["userId"]
 
     if not user_id:
         
         print("Need to be logged in to view collection")
         return
 
-    curs.execute("""SELECT c.collectionname, 
-                 COUNT(m.movieid) AS num_movies,
-                 TO_CHAR(MAKE_INTERVAL(mins => SUM(duration)), 'HH24:MI') AS total_length
-                 FROM collection c
-                 LEFT JOIN movie m ON c.movieid = m.movieid
-                 WHERE c.userid = %s
-                 GROUP BY c.collectionname
-                 ORDER BY c.collectionname ASC""", (user_id,))
+    try:
+        curs.execute("""
+            SELECT c.collectionname, 
+                   COUNT(p.movieid) AS num_movies,
+                   TO_CHAR(COALESCE(SUM(m.duration), 0) * INTERVAL '1 minute', 'HH24:MI') AS total_length
+            FROM collection c
+            LEFT JOIN partof p ON c.collectionid = p.collectionid  -- Correct JOIN using partof
+            LEFT JOIN movie m ON p.movieid = m.movieid  -- Movies are linked via partof
+            WHERE c.userid = %s
+            GROUP BY c.collectionname
+            ORDER BY c.collectionname ASC
+        """, (user_id,))
                 
-    list_collections = conn.fetchall()
+        list_collections = curs.fetchall()
 
-    for collect in list_collections:
+        for collect in list_collections:
 
-        name = collect[0]
-        num_movies = collect[1]
-        total_length = collect[2]
+            name = collect[0]
+            num_movies = collect[1]
+            #total_length = collect[2]
+            total_length = collect[2] if collect[2] else "00:00" 
 
-        print(f"Collection Name: '{name}'  Number Of Movies: '{num_movies}' Total Length Of Movies In Collection: '{total_length}'")
+            print(f"Collection Name: '{name}'  Number Of Movies: '{num_movies}' Total Length Of Movies In Collection: '{total_length}'")
+    except Exception as e:
+        print(f"Error viewing collection: {e}")
+        conn.rollback()
 
-#user will be able to create collection of movies
 def create_collection():
+    """
+    Allows users to create a collection of movies.  
+
+    This function lets users create new collections of movies.  
+    The system will notify users if they try to create a collection with the same exact name as an existing one.  
+    """
 
     print("Creating a new collection")
 
@@ -696,7 +829,6 @@ def create_collection():
     collection_name = new_collection.strip()
 
     user_id = user_session["userId"]
-    print(user_id)
 
     try:
         
@@ -742,6 +874,12 @@ def create_collection():
         conn.rollback()
 
 def name_collection():
+    """  
+    Allows users to modify the name of a collection.  
+
+    This function lets users select an existing collection and change its name,  
+    without deleting or adding new collections.  
+    """
 
     print("Modifying the name of a collection")
 
