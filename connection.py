@@ -9,7 +9,7 @@ import psycopg
 from sshtunnel import SSHTunnelForwarder
 from dotenv import load_dotenv
 
-import movies_app.movies_app as movies_app
+import movies_app as movies_app
 
 load_dotenv()
 

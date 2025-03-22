@@ -1,18 +1,18 @@
-from auth import (
+from movies.auth import (
     create_account,
     login
 )
-from user import (
+from movies.user import (
     follow,
     unfollow
 )
-from movie import (
+from movies.movie import (
     watch_movie,
     watch_collection,
     rate_movie,
     search
 )
-from collection import (
+from movies.collection import (
     add_to_collection,
     remove_from_collection,
     delete_collection,
