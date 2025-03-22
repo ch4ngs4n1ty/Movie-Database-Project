@@ -140,8 +140,6 @@ def create_account():
         conn.commit()
 
         print("Account has been created\n")
-
-        login()
         
     except Exception as e:
         
@@ -352,25 +350,27 @@ def watch_movie():
     """
 
     print("Watch a movie")
-    movie_id = input("Enter Movie ID: ").strip()
+    movie_name = input("Enter movie name: ").strip()
     
     try:
         
         # checks if movie exists in database
-        curs.execute("SELECT * FROM movie WHERE movieid = %s", (movie_id,))
+        curs.execute("SELECT movieid, title FROM movie WHERE title ILIKE %s", (movie_name,))
         movie = curs.fetchone()
         
         if not movie:
             print("Movie not found")
             return
         
+        movie_id = movie[0]
         watch_date = datetime.datetime.now()
 
         # adds an entry in watches table
         curs.execute("INSERT INTO watches(userid, movieid, datetimewatched) VALUES (%s, %s, %s)"
                      , (user_session["userId"], movie_id, watch_date))
+        
         conn.commit()
-        print(f"Watched {movie}")
+        print(f"Watched {movie[1]}")
         
     except Exception as e:
         
