@@ -32,6 +32,7 @@ def main(curs, conn):
 
     while True:
         while not user_session["loggedIn"]:
+            print()
             command = input("Would you like to login or create an account?\n" + 
                             "login - log into an account\n" +
                             "create account - create an account\n")
@@ -42,9 +43,6 @@ def main(curs, conn):
                 login(user_session, curs, conn)
                 if user_session["loggedIn"] == True: 
                     help()
-
-            else:
-                pass
 
             while user_session["loggedIn"]:
                 command = input("Enter a command:\n")
@@ -58,6 +56,7 @@ def main(curs, conn):
                     print("Logged out")
 
                 elif command == "follow":
+                    print()
                     follow(user_session, curs, conn)
 
                 elif command == "unfollow":
@@ -82,6 +81,7 @@ def main(curs, conn):
                     remove_from_collection(user_session, curs, conn)
 
                 elif command == "delete collection":
+                    print()
                     delete_collection(user_session, curs, conn)
 
                 elif command == "view collections":
@@ -109,7 +109,7 @@ rate - rate a movie
 search - search for a movie or user
 add - add a movie to a collection
 remove - remove a movie from a collection
-delete collection- delete a movie from a collection
+delete collection- delete a collection
 view collections - view all collections
 create collection - create a collection
 name collection - name a collection
