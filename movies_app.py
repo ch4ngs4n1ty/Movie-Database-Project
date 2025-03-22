@@ -330,8 +330,11 @@ def unfollow():
 
 def watch_movie():
     """
-    
-    
+    Allows the user to watch a movie individually.  
+
+    This function lets the user select a movie  
+    to watch. When they access the movie, the system  
+    records the date and time of access.  
     """
 
     print("Watch a movie")
@@ -361,7 +364,13 @@ def watch_movie():
         conn.rollback()
     
 def watch_collection():
-    
+    """
+    Allows the user to watch an entire collection of movies.  
+
+    This function lets the user select a collection to watch,  
+    playing all movies in that collection. The system records  
+    the date and time of access while watching.
+    """    
     print("Watch a collection")
 
     collection_id = input("Enter Collection ID: ").strip()
@@ -391,9 +400,17 @@ def watch_collection():
         conn.rollback()
 
 def rate_movie():
-    
+    """
+    Allows users to rate a movie.  
+
+    This function lets the user provide a star rating (1-5)  
+    for a specific movie. After rating, the rating is saved  
+    to the movie's rating record.  
+    """
     print("Rate movie")
-    movie_id = input("Enter movie ID: ")
+
+
+    movie_id = int(input("Enter movie ID: "))
     rating = round(float(input("Enter rating: ")))
     
     # gets the movie with the movieid
@@ -414,6 +431,13 @@ def rate_movie():
             conn.rollback
 
 def search():
+    """
+    Allows users to search movies by name, release date, cast members, studio, or genre.  
+
+    This function lets users search for movies in the database based on their chosen criteria.  
+    The system returns a list of movies sorted alphabetically (ascending) by movie name and release date.  
+    Users can also choose to sort the list in ascending or descending order.  
+    """
 
     print("Search Movies By:")
     print("1. Name")
@@ -523,6 +547,12 @@ def search():
 
 
 def add_to_collection():
+    """
+    Allows users to add movies to a collection.  
+
+    This function lets users select a movie they want to add to one of their created collections.  
+    The system will notify users if the movie is not found in the database or if they have no collections.  
+    """
 
     print("Adding a movie to your collection")
 
@@ -602,6 +632,12 @@ def add_to_collection():
         conn.rollback()
 
 def remove_from_collection():
+    """  
+    Allows users to remove movies from a collection.  
+
+    This function lets users view their collections,  
+    select a collection, and see the movies within it.  
+    """
 
     print("Removing a movie from your collection")
 
@@ -670,6 +706,13 @@ def remove_from_collection():
         conn.rollback()
 
 def delete_collection():
+    """
+    Allows users to delete an entire collection.  
+
+    This function lets users select the collection ID they want to delete.  
+    The system will notify users if the selected collection doesn't exist  
+    or if there is an error during the deletion process.  
+    """
     
     print("Deleting a collection")
     collection_id = input("Enter collection ID: ").strip()
@@ -698,6 +741,13 @@ def delete_collection():
 
     
 def view_collections():
+    """
+    Allows users to view a list of all their collections.  
+
+    This function returns a list of all user-created collections,  
+    sorted by name in ascending order. It also displays the number of  
+    movies in each collection and the total length of movies in the collection.  
+    """
 
     user_id = user_session["userid"]
 
@@ -725,8 +775,13 @@ def view_collections():
 
         print(f"Collection Name: '{name}'  Number Of Movies: '{num_movies}' Total Length Of Movies In Collection: '{total_length}'")
 
-#user will be able to create collection of movies
 def create_collection():
+    """
+    Allows users to create a collection of movies.  
+
+    This function lets users create new collections of movies.  
+    The system will notify users if they try to create a collection with the same exact name as an existing one.  
+    """
 
     print("Creating a new collection")
 
@@ -783,6 +838,12 @@ def create_collection():
         conn.rollback()
 
 def name_collection():
+    """  
+    Allows users to modify the name of a collection.  
+
+    This function lets users select an existing collection and change its name,  
+    without deleting or adding new collections.  
+    """
 
     print("Modifying the name of a collection")
 
