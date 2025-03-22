@@ -748,14 +748,6 @@ def view_collections():
     sorted by name in ascending order. It also displays the number of  
     movies in each collection and the total length of movies in the collection.  
     """
-
-    user_id = user_session["userid"]
-
-    if not user_id:
-        
-        print("Need to be logged in to view collection")
-        return
-
     curs.execute("""SELECT c.collectionname, 
                  COUNT(m.movieid) AS num_movies,
                  TO_CHAR(MAKE_INTERVAL(mins => SUM(duration)), 'HH24:MI') AS total_length
@@ -763,9 +755,11 @@ def view_collections():
                  LEFT JOIN movie m ON c.movieid = m.movieid
                  WHERE c.userid = %s
                  GROUP BY c.collectionname
-                 ORDER BY c.collectionname ASC""", (user_id,))
+                 ORDER BY c.collectionname ASC""", (user_session["userid"],))
                 
     list_collections = conn.fetchall()
+
+    print(list_collections)
 
     for collect in list_collections:
 
