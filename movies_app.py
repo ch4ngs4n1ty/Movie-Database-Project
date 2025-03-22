@@ -63,7 +63,7 @@ def main(cursor, connection):
                     add_to_collection()
                 elif command == "remove":
                     remove_from_collection()
-                elif command == "delete":
+                elif command == "delete collection":
                     delete_collection()
                 elif command == "view collections":
                     view_collections()
@@ -87,7 +87,7 @@ rate - rate a movie
 search - search for a movie or user
 add - add a movie to a collection
 remove - remove a movie from a collection
-delete - delete a movie from a collection
+delete collection- delete a movie from a collection
 view collections - view all collections
 create collection - create a collection
 name collection - name a collection
