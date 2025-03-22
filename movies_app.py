@@ -384,14 +384,33 @@ def watch_collection():
     This function lets the user select a collection to watch,  
     playing all movies in that collection. The system records  
     the date and time of access while watching.
-    """    
-    print("Watch a collection")
-
-    collection_id = input("Enter Collection ID: ").strip()
-    
+    """        
     try:
         
+        print("Watch a collection")
+
+        user_id = user_session["userId"]
+
+        curs.execute("SELECT collectionid, collectionname FROM collection where userid = %s", (user_id,))
+
+        collection_list = curs.fetchall()
+
+        if not collection_list:
+            
+            print("You have no collections right now")
+
+            return
+        
+        print("Your Collections: ")
+        
+        for collection in collection_list:
+
+            print(f"ID: {collection[0]}, Collection Name: {collection[1]}")
+
+        collection_id = input("Enter Collection ID: ").strip()
+
         # gets movieid that are in the collection
+
         curs.execute("SELECT movieid FROM partof WHERE collectionid = %s", (collection_id,))
         movies = curs.fetchall()
         watch_date = datetime.datetime.now()
@@ -407,6 +426,10 @@ def watch_collection():
             movie_id = movie[0]
             curs.execute("INSERT INTO watches(userid, movieid, datetimewatched) VALUES (%s, %s, %s)",
                          (user_session["userId"], movie_id, watch_date))
+            
+        conn.commit()
+
+        print(f"Watched {collection_list}")
         
     except Exception as e:
         
@@ -616,23 +639,20 @@ def add_to_collection():
 
         user_id = user_session["userId"]
 
-        # Collection(CollectionID, CollectionName, UserID)
-        curs.execute("""SELECT CollectionID, CollectionName
-                        FROM Collection 
-                        WHERE UserID = %s""" , (user_id,))
-        
+        curs.execute("SELECT collectionid, collectionname FROM collection where userid = %s", (user_id,))
+
         collection_list = curs.fetchall()
 
         if not collection_list:
             
-            print("You currently have no collections right now.")
+            print("You have no collections right now")
 
             return
-
+        
         print("Your Collections: ")
-
+        
         for collection in collection_list:
-            
+
             print(f"ID: {collection[0]}, Collection Name: {collection[1]}")
 
         collection_id = input("Select Collection ID: ").strip()
