@@ -95,7 +95,7 @@ def main(curs, conn):
 
                 else:
                     print("Invalid command")
-                help()
+                    help()
 
 def help():
     help_msg = \
