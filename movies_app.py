@@ -791,7 +791,7 @@ def view_collections():
                  LEFT JOIN movie m ON c.movieid = m.movieid
                  WHERE c.userid = %s
                  GROUP BY c.collectionname
-                 ORDER BY c.collectionname ASC""", (user_id,))
+                 ORDER BY c.collectionname ASC""", (user_session["userid"],))
                 
     list_collections = curs.fetchall()
 
