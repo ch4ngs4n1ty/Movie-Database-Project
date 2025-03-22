@@ -5,11 +5,10 @@ import datetime
 user_session = {
     "loggedIn": False,
     "userId": None,
-    "userIndex": [],
     "followers": 0,
     "following": 0,
     "collections": 0
-    }
+}
 
 def main(cursor, connection):
     
@@ -25,12 +24,10 @@ def main(cursor, connection):
             if command == "create account":
                 
                 create_account()
-                user_session["loggedIn"] = True
                 
             if command == "login":
                 
                 login()
-                user_session["loggedIn"] = True
                 
             else:
                 
@@ -45,7 +42,6 @@ def main(cursor, connection):
                     
                     user_session["logged_in"] = False
                     user_session["userid"] = ""
-                    user_session["userIndex"] = []
                     user_session["followers"] = 0
                     user_session["following"] = 0
                     user_session["collections"] = 0
@@ -71,9 +67,9 @@ def main(cursor, connection):
                     delete_collection()
                 elif command == "view collections":
                     view_collections()
-                elif command == "create_collection":
+                elif command == "create collection":
                     create_collection()
-                elif command == "name_collection":
+                elif command == "name collection":
                     name_collection()
                 else:
                     print("Invalid command")
@@ -130,8 +126,8 @@ def create_account():
 
 def login():
 
-    username = input("Username: ")
-    password = input("Password: ")
+    username = input("Username: ").strip()
+    password = input("Password: ").strip()
 
     try:
 
@@ -180,7 +176,11 @@ def login():
 
         else: 
 
+            user_session["userId"] = ""
+            user_session["username"] = ""
+            user_session["loggedIn"] = False
             print("Invalid username or password!")
+            
 
     except Exception as e:
 
@@ -657,31 +657,38 @@ def delete_collection():
     
 def view_collections():
 
-    user_id = user_session["userid"]
-
+    user_id = user_session["userId"]
+    
     if not user_id:
         
         print("Need to be logged in to view collection")
         return
 
-    curs.execute("""SELECT c.collectionname, 
-                 COUNT(m.movieid) AS num_movies,
-                 TO_CHAR(MAKE_INTERVAL(mins => SUM(duration)), 'HH24:MI') AS total_length
-                 FROM collection c
-                 LEFT JOIN movie m ON c.movieid = m.movieid
-                 WHERE c.userid = %s
-                 GROUP BY c.collectionname
-                 ORDER BY c.collectionname ASC""", (user_id,))
-                
-    list_collections = conn.fetchall()
+    # curs.execute("""SELECT c.collectionname, 
+    #              COUNT(m.movieid) AS num_movies,
+    #              TO_CHAR(MAKE_INTERVAL(mins => SUM(duration)), 'HH24:MI') AS total_length
+    #              FROM collection c
+    #              LEFT JOIN movie m ON c.movieid = m.movieid
+    #              WHERE c.userid = %s
+    #              GROUP BY c.collectionname
+    #              ORDER BY c.collectionname ASC""", (user_id,))
+    
+    curs.execute('SELECT collectionname FROM collection WHERE userid = %s', (user_id,))
+    
+    a = [row[0] for row in curs.fetchall()]
+    
+    for i in range(0, len(a)): 
+        print(a[i])
+    
+    # list_collections = conn.fetchall()
 
-    for collect in list_collections:
+    # for collect in list_collections:
 
-        name = collect[0]
-        num_movies = collect[1]
-        total_length = collect[2]
+    #     name = collect[0]
+    #     num_movies = collect[1]
+    #     total_length = collect[2]
 
-        print(f"Collection Name: '{name}'  Number Of Movies: '{num_movies}' Total Length Of Movies In Collection: '{total_length}'")
+    #     print(f"Collection Name: '{name}'  Number Of Movies: '{num_movies}' Total Length Of Movies In Collection: '{total_length}'")
 
 #user will be able to create collection of movies
 def create_collection():
