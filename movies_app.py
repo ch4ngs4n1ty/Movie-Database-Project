@@ -351,25 +351,53 @@ def watch_collection():
 def rate_movie():
     
     print("Rate movie")
-    movie_id = int(input("Enter movie ID: "))
-    rating = round(float(input("Enter rating: ")))
+    movie_name = input("Enter movie title: ").strip()
     
-    # gets the movie with the movieid
-    curs.execute("SELECT * FROM movie WHERE movieId = %s", (movie_id,))
-    movie = curs.fetchone()
-    
-    if movie:
+    try:
         
-        try:
+        # Search for movies by title
+        curs.execute("SELECT movieid, title FROM movie WHERE title ILIKE %s", (movie_name,))
+        movies = curs.fetchone()
+
+        if not movies:
+            
+            print("No movie found with that title.")
+            return
+        
+        movie_id = movies[0]
+        rating = round(float(input("Enter rating(1-5): ")))
+
+        # ensure rating within valid range
+        if rating < 1 or rating > 5:
+             
+            print("Invalid rating! Please enter a number between 1 and 5.")
+            return
+
+        # Check if the user has already rated this movie
+        curs.execute("SELECT * FROM rates WHERE movieid = %s AND userid = %s", 
+                     (movie_id, user_session["userId"]))
+        existing_rating = curs.fetchone()
+
+        if existing_rating:
+            
+            # Update existing rating
+            curs.execute("UPDATE rates SET starrating = %s WHERE movieid = %s AND userid = %s", 
+                         (str(rating), movie_id, user_session["userId"]))
+            print("Rating updated")
+            
+        else:
             
             # adds the movie rating into rates table
-            curs.execute("INSERT INTO rates VALUES (%s, %s, %s)", (user_session["userId"], movie_id, rating))
-            print("Rating successful")
+            curs.execute("INSERT INTO rates(movieid, userid, starrating) VALUES (%s, %s, %s)", 
+                         (movie_id, user_session["userId"], str(rating)))
+            print("Rating submitted")
         
-        except Exception as e:
+        conn.commit()
         
-            print("Error occured rating movie")
-            conn.rollback
+    except Exception as e:
+        
+        print("Error occured rating movie")
+        conn.rollback
 
 def search():
 
