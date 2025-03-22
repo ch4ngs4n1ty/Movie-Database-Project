@@ -1,3 +1,5 @@
+import datetime
+
 def watch_movie(user_session, curs, conn):
     """
     Allows the user to watch a movie individually.  

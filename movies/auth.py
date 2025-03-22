@@ -33,8 +33,6 @@ def create_account(user_session, curs, conn):
         conn.commit()
 
         print("Account has been created\n")
-
-        login()
         
     except Exception as e:
         

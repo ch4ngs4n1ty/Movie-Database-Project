@@ -28,21 +28,21 @@ def add_to_collection(user_session, curs, conn):
 
             print(f"ID: {collection[0]}, Collection Name: {collection[1]}")
 
-        collection_id = input("Select Collection ID: ").strip()
+        collection_name = input("Select Collection Name: ").strip()
 
-        valid_collection_ids = [collection[0] for collection in collection_list]
+        valid_collection_names = [collection[1] for collection in collection_list]
 
-        if collection_id not in valid_collection_ids:
+        if collection_name not in valid_collection_names:
 
-            print("Invalid Collection ID. Must input c1, c2, c3....")
+            print("Invalid Collection Name.")
             
             return
 
         for collection in collection_list:
 
-            if collection[0] == collection_id:
+            if collection[1] == collection_name:
 
-                collection_name = collection[1]
+                collection_id = collection[0]
 
                 break
         
@@ -120,21 +120,21 @@ def remove_from_collection(user_session, curs, conn):
 
             print(f"ID: {collection[0]}, Collection Name: {collection[1]}")
 
-        collection_id = input("Select Collection ID: ").strip()
+        collection_name = input("Select Collection Name: ").strip()
 
-        valid_collection_ids = [collection[0] for collection in collection_list]
+        valid_collection_names = [collection[1] for collection in collection_list]
 
-        if collection_id not in valid_collection_ids:
+        if collection_name not in valid_collection_names:
 
-            print("Invalid Collection ID. Must input c1, c2, c3....")
+            print("Invalid Collection ID.")
             
             return
 
         for collection in collection_list:
 
-            if collection[0] == collection_id:
+            if collection[1] == collection_name:
 
-                collection_name = collection[1]
+                collection_id = collection[0]
 
                 break
 
