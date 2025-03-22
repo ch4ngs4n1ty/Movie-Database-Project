@@ -5,11 +5,12 @@ import datetime
 user_session = {
     "loggedIn": False,
     "userId": None,
-    "userIndex": [],
     "followers": 0,
     "following": 0,
     "collections": 0
     }
+curs
+conn
 
 def main(cursor, connection):
     
@@ -25,12 +26,10 @@ def main(cursor, connection):
             if command == "create account":
                 
                 create_account()
-                user_session["loggedIn"] = True
                 
             if command == "login":
                 
                 login()
-                user_session["loggedIn"] = True
                 
             else:
                 
@@ -45,7 +44,6 @@ def main(cursor, connection):
                     
                     user_session["logged_in"] = False
                     user_session["userid"] = ""
-                    user_session["userIndex"] = []
                     user_session["followers"] = 0
                     user_session["following"] = 0
                     user_session["collections"] = 0
@@ -191,7 +189,11 @@ def login():
                 curs.execute("""
                     INSERT INTO accessdates(userid, accessdate)
                     VALUES (%s, %s)""", (user[0], access_date))
-                
+            
+            user_session["userId"] = user[0]
+            user_session["username"] = user[1]
+            user_session["loggedIn"] = True
+            
             print(f"Hello, {username}!")
 
             help()
@@ -775,7 +777,7 @@ def view_collections():
     movies in each collection and the total length of movies in the collection.  
     """
 
-    user_id = user_session["userid"]
+    user_id = user_session["userId"]
 
     if not user_id:
         
@@ -791,7 +793,7 @@ def view_collections():
                  GROUP BY c.collectionname
                  ORDER BY c.collectionname ASC""", (user_id,))
                 
-    list_collections = conn.fetchall()
+    list_collections = curs.fetchall()
 
     for collect in list_collections:
 
