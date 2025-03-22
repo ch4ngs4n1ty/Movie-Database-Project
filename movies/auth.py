@@ -10,6 +10,7 @@ def create_account(user_session, curs, conn):
     """
 
     try:
+        
         # gets the next available userId from users
         curs.execute("SELECT COALESCE(MAX(CAST(SUBSTRING(userId, 2) as INTEGER)), 0) + 1 FROM users")
         new_id = curs.fetchone()[0]
@@ -98,8 +99,6 @@ def login(user_session, curs, conn):
             user_session["loggedIn"] = True
             
             print(f"Hello, {username}!")
-
-            help()
 
             conn.commit()
 
