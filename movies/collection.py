@@ -198,14 +198,7 @@ def delete_collection(user_session, curs, conn):
         
         curs.execute('SELECT collectionid FROM collection WHERE collectionname = %s', (collection_name,))
         collection_id = curs.fetchone()[0]
-        
-        # curs.execute("SELECT * FROM collection WHERE collectionname = %s", (collection_name,))
-        # collection = curs.fetchone()
-        
-        # if not collection:
-        #     print("Collection not found")
-        #     return
-        
+
         # delete collection from partof table
         curs.execute("DELETE FROM partof WHERE collectionid = %s", (collection_id,))
         
@@ -234,6 +227,7 @@ def view_collections(user_session, curs, conn):
     if not user_id:
         
         print("Need to be logged in to view collection")
+
         return
 
     try:
@@ -251,16 +245,24 @@ def view_collections(user_session, curs, conn):
                 
         list_collections = curs.fetchall()
 
+        if not list_collections:
+            
+            print("You have no collections right now")
+
+            return
+
         for collect in list_collections:
 
             name = collect[0]
             num_movies = collect[1]
-            #total_length = collect[2]
             total_length = collect[2] if collect[2] else "00:00" 
 
             print(f"Collection Name: '{name}'  Number Of Movies: '{num_movies}' Total Length Of Movies In Collection: '{total_length}'")
+    
     except Exception as e:
+
         print(f"Error viewing collection: {e}")
+
         conn.rollback()
 
 def create_collection(user_session, curs, conn):

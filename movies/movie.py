@@ -10,25 +10,28 @@ def watch_movie(user_session, curs, conn):
     """
 
     print("Watch a movie")
-    movie_id = input("Enter Movie ID: ").strip()
+    movie_name = input("Enter movie title: ").strip()
     
     try:
         
-        # checks if movie exists in database
-        curs.execute("SELECT * FROM movie WHERE movieid = %s", (movie_id,))
-        movie = curs.fetchone()[0]
-        
-        if not movie:
-            print("Movie not found")
+        # Search for movies by title
+        curs.execute("SELECT movieid FROM movie WHERE title ILIKE %s", (movie_name,))
+        movies = curs.fetchone()
+
+        if not movies:
+            
+            print("No movie found with that title.")
             return
         
         watch_date = datetime.datetime.now()
 
         # adds an entry in watches table
         curs.execute("INSERT INTO watches(userid, movieid, datetimewatched) VALUES (%s, %s, %s)"
-                     , (user_session["userId"], movie_id, watch_date))
+                     , (user_session["userId"], movie_name, watch_date))
+        
         conn.commit()
-        print(f"Watched {movie}")
+        
+        print(f"Watched {movie_name}")
         
     except Exception as e:
         
@@ -184,13 +187,12 @@ def search(user_session, curs, conn):
         "4": "Studio",
         "5": "Genre"
     }
-
     search_options = {
-    "1": "LOWER(m.title)",   
-    "2": "LOWER(ro.releasedate)",
-    "3": "LOWER(CONCAT(mp.firstname, ' ', mp.lastname))",  
-    "4": "LOWER(s.studioname)",  
-    "5": "LOWER(g.genrename)"   
+        "1": "LOWER(m.title)",   
+        "2": "TO_CHAR(ro.releasedate, 'YYYY-MM-DD')",
+        "3": "LOWER(CONCAT(mp.firstname, ' ', mp.lastname))",  
+        "4": "LOWER(s.studioname)",  
+        "5": "LOWER(g.genrename)"   
     }
 
     search_by = input("Select (1 - 5): ").strip()
@@ -198,12 +200,7 @@ def search(user_session, curs, conn):
     #searched value to actually get the value user inputs
     selected_search = search_options[search_by]
 
-    #prompt used to guide user's interaction
-    selected_prompt = prompt_options[search_by] 
-
-    search_value = input(f"Enter {selected_prompt}: ").strip()       
-
-    #val = f"%{search_value.lower()}" 
+    search_value = input(f"Enter {prompt_options[search_by]}: ").strip()       
 
     print("Sort Results By:")
     print("1. Movie Name")
@@ -221,52 +218,110 @@ def search(user_session, curs, conn):
     }
   
     if sort_by:
-
         sort_order = input("Select order (ASC or DESC): ").strip()
-
         if sort_order not in ["ASC", "DESC"]:
-
             print("Must either select ASC or DESC!")
-
             return
 
         sort_column = sort_options[sort_by]
         selected_order = (f"{sort_column} {sort_order}")
-
     else:
-
         selected_order = "ORDER BY m.title ASC, ro.releasedate ASC"
-
-    query = f"""
-            SELECT 
-            m.title AS movie_name,
-        CONCAT(mp.firstname, ' ', mp.lastname) AS cast_members,
-        CONCAT(dp.firstname, ' ', dp.lastname) AS director_name,
-        m.duration AS movie_duration,
-        m.mpaarating AS mpaa_rating,
-        ROUND(AVG(r.starrating), 1) AS user_rating,
-        s.studioname AS studio,
-        g.genrename AS genre,
-        EXTRACT(YEAR FROM ro.releasedate) AS release_year
+    
+    from_clause = """
         FROM 
-        Movie m
-        LEFT JOIN starsin si ON m.movieid = si.movieid
-        LEFT JOIN moviepeople mp ON si.personid = mp.personid
-        LEFT JOIN directs dir ON m.movieid = dir.movieid
-        LEFT JOIN moviepeople dp ON dir.personid = dp.personid
-        LEFT JOIN rates r ON m.movieid = r.movieid 
-        LEFT JOIN created c ON m.movieid = c.movieid
-        LEFT JOIN studios s ON c.studioid = s.studioid
-        LEFT JOIN contains co ON m.movieid = co.movieid
-        LEFT JOIN genre g ON co.genreid = g.genreid
-        LEFT JOIN releasedon ro ON m.movieid = ro.movieid
-        WHERE 
-        {selected_search} LIKE %s
-        GROUP BY 
-        m.movieid, m.title, mp.firstname, mp.lastname, dp.firstname, dp.lastname, m.duration, m.mpaarating, s.studioname, g.genrename, ro.releasedate
-        ORDER BY 
-        {selected_order};
-        """
+            Movie m
+            LEFT JOIN starsin si ON m.movieid = si.movieid
+            LEFT JOIN moviepeople mp ON si.personid = mp.personid
+            LEFT JOIN directs dir ON m.movieid = dir.movieid
+            LEFT JOIN moviepeople dp ON dir.personid = dp.personid
+            LEFT JOIN rates r ON m.movieid = r.movieid 
+            LEFT JOIN created c ON m.movieid = c.movieid
+            LEFT JOIN studios s ON c.studioid = s.studioid
+            LEFT JOIN contains co ON m.movieid = co.movieid
+            LEFT JOIN genre g ON co.genreid = g.genreid
+            LEFT JOIN releasedon ro ON m.movieid = ro.movieid
+    """
+    if sort_by == "1":
+        query = f"""
+            SELECT 
+                m.title AS movie_name,
+                STRING_AGG(DISTINCT CONCAT(mp.firstname, ' ', mp.lastname), ', ') AS cast_members,
+                STRING_AGG(DISTINCT CONCAT(dp.firstname, ' ', dp.lastname), ', ') AS director_name,
+                m.duration AS movie_duration,
+                m.mpaarating AS mpaa_rating,
+                ROUND(AVG(r.starrating), 1) AS user_rating,
+                STRING_AGG(DISTINCT s.studioname, ', ') AS studios,
+                STRING_AGG(DISTINCT g.genrename, ', ') AS genres, 
+                STRING_AGG(DISTINCT EXTRACT(YEAR FROM ro.releasedate)::TEXT, ', ') AS release_year
+            {from_clause}
+            WHERE 
+                {selected_search} LIKE %s
+            GROUP BY 
+                m.movieid, m.title, m.duration, m.mpaarating
+            ORDER BY 
+                {selected_order};
+            """
+    elif sort_by == "2":
+        query = f"""
+            SELECT 
+                m.title AS movie_name,
+                STRING_AGG(DISTINCT CONCAT(mp.firstname, ' ', mp.lastname), ', ') AS cast_members,
+                STRING_AGG(DISTINCT CONCAT(dp.firstname, ' ', dp.lastname), ', ') AS director_name,
+                m.duration AS movie_duration,
+                m.mpaarating AS mpaa_rating,
+                ROUND(AVG(r.starrating), 1) AS user_rating,
+                s.studioname AS studios,
+                STRING_AGG(DISTINCT g.genrename, ', ') AS genres, 
+                STRING_AGG(DISTINCT EXTRACT(YEAR FROM ro.releasedate)::TEXT, ', ') AS release_year
+            {from_clause}
+            WHERE 
+                {selected_search} LIKE %s
+            GROUP BY 
+                m.movieid, m.title, m.duration, m.mpaarating, s.studioname
+            ORDER BY 
+                {selected_order};
+            """
+    elif sort_by == "3":
+        query = f"""
+            SELECT 
+                m.title AS movie_name,
+                STRING_AGG(DISTINCT CONCAT(mp.firstname, ' ', mp.lastname), ', ') AS cast_members,
+                STRING_AGG(DISTINCT CONCAT(dp.firstname, ' ', dp.lastname), ', ') AS director_name,
+                m.duration AS movie_duration,
+                m.mpaarating AS mpaa_rating,
+                ROUND(AVG(r.starrating), 1) AS user_rating,
+                STRING_AGG(DISTINCT s.studioname, ', ') AS studios,
+                g.genrename AS genres, 
+                STRING_AGG(DISTINCT EXTRACT(YEAR FROM ro.releasedate)::TEXT, ', ') AS release_year
+            {from_clause}
+            WHERE 
+                {selected_search} LIKE %s
+            GROUP BY 
+                m.movieid, m.title, m.duration, m.mpaarating, g.genrename
+            ORDER BY 
+                {selected_order};
+            """
+    elif sort_by == "4":
+        query = f"""
+            SELECT 
+                m.title AS movie_name,
+                STRING_AGG(DISTINCT CONCAT(mp.firstname, ' ', mp.lastname), ', ') AS cast_members,
+                STRING_AGG(DISTINCT CONCAT(dp.firstname, ' ', dp.lastname), ', ') AS director_name,
+                m.duration AS movie_duration,
+                m.mpaarating AS mpaa_rating,
+                ROUND(AVG(r.starrating), 1) AS user_rating,
+                STRING_AGG(DISTINCT s.studioname, ', ') AS studios,
+                STRING_AGG(DISTINCT g.genrename, ', ') AS genres, 
+                EXTRACT(YEAR FROM ro.releasedate) AS release_year
+            {from_clause}
+            WHERE 
+                {selected_search} LIKE %s
+            GROUP BY 
+                m.movieid, m.title, m.duration, m.mpaarating, ro.releasedate
+            ORDER BY 
+                {selected_order};
+            """
 
     val = f"%{search_value.lower()}%"  
 
@@ -275,19 +330,18 @@ def search(user_session, curs, conn):
     result_list = curs.fetchall()
 
     if not result_list:
-
         print("No results found")
         return
 
     for row in result_list:
         movie_name, cast_members, director_name, movie_duration, mpaa_rating, user_rating, studio, genre, release_year = row
+        print("-" * 40)
         print(f"Movie: {movie_name}")
         print(f"Cast: {cast_members}")
         print(f"Director: {director_name}")
         print(f"Duration: {movie_duration} minutes")
         print(f"MPAA Rating: {mpaa_rating}")
-        print(f"User Rating: {user_rating}")
+        print(f"User Rating: {"Unrated" if user_rating is None else user_rating}")
         print(f"Studio: {studio}")
         print(f"Genre: {genre}")
-        print(f"Release Year: {release_year}")
-        print("-" * 40)
+        print(f"Release Year: {"Unreleased" if release_year is None else release_year}")
