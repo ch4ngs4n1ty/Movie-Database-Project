@@ -27,7 +27,7 @@ def watch_movie(user_session, curs, conn):
 
         # adds an entry in watches table
         curs.execute("INSERT INTO watches(userid, movieid, datetimewatched) VALUES (%s, %s, %s)"
-                     , (user_session["userId"], movie_name, watch_date))
+                     , (user_session["userId"], movies[0], watch_date))
         
         conn.commit()
         
