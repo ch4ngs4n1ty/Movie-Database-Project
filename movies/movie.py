@@ -10,25 +10,28 @@ def watch_movie(user_session, curs, conn):
     """
 
     print("Watch a movie")
-    movie_id = input("Enter Movie ID: ").strip()
+    movie_name = input("Enter movie title: ").strip()
     
     try:
         
-        # checks if movie exists in database
-        curs.execute("SELECT * FROM movie WHERE movieid = %s", (movie_id,))
-        movie = curs.fetchone()[0]
-        
-        if not movie:
-            print("Movie not found")
+        # Search for movies by title
+        curs.execute("SELECT movieid FROM movie WHERE title ILIKE %s", (movie_name,))
+        movies = curs.fetchone()
+
+        if not movies:
+            
+            print("No movie found with that title.")
             return
         
         watch_date = datetime.datetime.now()
 
         # adds an entry in watches table
         curs.execute("INSERT INTO watches(userid, movieid, datetimewatched) VALUES (%s, %s, %s)"
-                     , (user_session["userId"], movie_id, watch_date))
+                     , (user_session["userId"], movie_name, watch_date))
+        
         conn.commit()
-        print(f"Watched {movie}")
+        
+        print(f"Watched {movie_name}")
         
     except Exception as e:
         
