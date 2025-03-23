@@ -126,7 +126,7 @@ def remove_from_collection(user_session, curs, conn):
 
         if collection_name not in valid_collection_names:
 
-            print("Invalid Collection ID.")
+            print("Invalid Collection Name.")
             
             return
 
@@ -325,7 +325,7 @@ def create_collection(user_session, curs, conn):
         print("Error occured when attempting to create collection:", e)
         conn.rollback()
 
-def name_collection(user_session, curs, conn):
+def rename_collection(user_session, curs, conn):
     """  
     Allows users to modify the name of a collection.  
 
@@ -333,7 +333,7 @@ def name_collection(user_session, curs, conn):
     without deleting or adding new collections.  
     """
 
-    print("Modifying the name of a collection")
+    print("Choose a collection to rename.")
 
     try: 
 
@@ -355,21 +355,22 @@ def name_collection(user_session, curs, conn):
 
             print(f"ID: {collection[0]}, Collection Name: {collection[1]}")
 
-        collection_id = input("Select Collection ID: ").strip()
+        print() #Creating white space to separate things for readability.
+        collection_name = input("Select Collection Name: ").strip()
 
-        valid_collection_ids = [collection[0] for collection in collection_list]
+        valid_collection_names = [collection[1] for collection in collection_list]
 
-        if collection_id not in valid_collection_ids:
+        if collection_name not in valid_collection_names:
 
-            print("Invalid Collection ID. Must input c1, c2, c3....")
+            print("Invalid Collection Name.")
             
             return
 
         for collection in collection_list:
 
-            if collection[0] == collection_id:
+            if collection[1] == collection_name:
 
-                collection_name = collection[1]
+                collection_id = collection[0]
 
                 break
 

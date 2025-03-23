@@ -19,6 +19,7 @@ def create_account(user_session, curs, conn):
         # ensure unique username
         while True:
             
+            print()
             username = input("Username: ").strip()
 
             # check if the username is already taken
@@ -32,6 +33,7 @@ def create_account(user_session, curs, conn):
             
                 break  # username is unique
         
+        email = None
         # ensure unique email
         while True:
             
@@ -51,7 +53,7 @@ def create_account(user_session, curs, conn):
         lastname = input("Last Name: ").strip()
         region = input("Region: ").strip()
         dob = input("Date of birth(YYYY-MM-DD): ").strip()
-        email = input("Email address: ").strip()
+        email = email
         creation_date = datetime.datetime.now()
         
         # adds the users account to users
@@ -80,6 +82,7 @@ def login(user_session, curs, conn):
     If successful, it updates the access time.  
     """
 
+    print() # Newline to create space. 
     print("Login your account")
 
     username = input("Username: ")

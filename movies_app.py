@@ -18,7 +18,7 @@ from movies.collection import (
     delete_collection,
     view_collections,
     create_collection,
-    name_collection
+    rename_collection
 )
 
 def main(curs, conn):
@@ -45,7 +45,8 @@ def main(curs, conn):
                     help()
 
             while user_session["loggedIn"]:
-                command = input("Enter a command:\n")
+                print()
+                command = input("Enter a command:\n").strip()
 
                 if command == "logout":
                     user_session["loggedIn"] = False
@@ -60,24 +61,31 @@ def main(curs, conn):
                     follow(user_session, curs, conn)
 
                 elif command == "unfollow":
+                    print()
                     unfollow(user_session, curs, conn)
 
                 elif command == "watch movie":
+                    print()
                     watch_movie(user_session, curs, conn)
 
                 elif command == "watch collection":
+                    print()
                     watch_collection(user_session, curs, conn)
 
                 elif command == "rate":
+                    print()
                     rate_movie(user_session, curs, conn)
 
                 elif command == "search":
+                    print()
                     search(user_session, curs, conn)
 
                 elif command == "add":
+                    print()
                     add_to_collection(user_session, curs, conn)
 
                 elif command == "remove":
+                    print()
                     remove_from_collection(user_session, curs, conn)
 
                 elif command == "delete collection":
@@ -85,13 +93,16 @@ def main(curs, conn):
                     delete_collection(user_session, curs, conn)
 
                 elif command == "view collections":
+                    print()
                     view_collections(user_session, curs, conn)
 
                 elif command == "create collection":
+                    print()
                     create_collection(user_session, curs, conn)
 
-                elif command == "name collection":
-                    name_collection(user_session, curs, conn)
+                elif command == "rename collection":
+                    print()
+                    rename_collection(user_session, curs, conn)
 
                 else:
                     print("Invalid command")
@@ -112,6 +123,6 @@ remove - remove a movie from a collection
 delete collection- delete a collection
 view collections - view all collections
 create collection - create a collection
-name collection - name a collection
+rename collection - rename a collection
 """
     print(help_msg)
