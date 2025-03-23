@@ -189,7 +189,7 @@ def search(user_session, curs, conn):
     }
     search_options = {
         "1": "LOWER(m.title)",   
-        "2": "LOWER(ro.releasedate)",
+        "2": "TO_CHAR(ro.releasedate, 'YYYY-MM-DD')",
         "3": "LOWER(CONCAT(mp.firstname, ' ', mp.lastname))",  
         "4": "LOWER(s.studioname)",  
         "5": "LOWER(g.genrename)"   
