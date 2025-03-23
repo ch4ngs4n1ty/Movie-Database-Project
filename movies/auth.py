@@ -33,6 +33,8 @@ def create_account(user_session, curs, conn):
             
                 break  # username is unique
         
+        password = input("Password: ").strip()
+        
         email = None
         # ensure unique email
         while True:
@@ -48,7 +50,6 @@ def create_account(user_session, curs, conn):
                 
                 break  # email is unique
         
-        password = input("Password: ").strip()
         firstname = input("First Name: ").strip()
         lastname = input("Last Name: ").strip()
         region = input("Region: ").strip()
