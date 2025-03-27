@@ -345,3 +345,6 @@ def search(user_session, curs, conn):
         print(f"Studio: {studio}")
         print(f"Genre: {genre}")
         print(f"Release Year: {"Unreleased" if release_year is None else release_year}")
+
+def view_top_10(user_session, curs, conn):
+    print("your top 10 movies are: xyz")

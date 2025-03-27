@@ -396,3 +396,6 @@ def rename_collection(user_session, curs, conn):
         
         print("Error modifying collection name:", e)
         conn.rollback()
+
+def total_collections(user_session, curs, conn):
+    print("you have x number of collections")
