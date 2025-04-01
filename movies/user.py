@@ -63,7 +63,7 @@ def unfollow(user_session, curs, conn):
     if no account is found or if they are not following the user.      
     """
     
-    print("Unfollow a user")
+    print("Unfollow A User")
     user_email = input("Enter users email: ").strip()
     
     try:
@@ -117,3 +117,40 @@ def unfollow(user_session, curs, conn):
         
         print("Error unfollowing user")
         conn.rollback()
+
+def view_profile(user_session, curs, conn):
+
+    user_email = input("Input user's email to view their profile:  ").strip()
+
+    try:
+
+        curs.execute("SELECT userid FROM email WHERE email = %s", (user_email,))
+
+        user_id = curs.fetchone()
+
+        if not user_id:
+            
+            print("No user with this email found")
+            return
+
+        user_id = user_id[0]
+
+        print("Number Of Collections\n")
+
+        curs.execute("SELECT COUNT(*) FROM collection WHERE userid = %s", (user_id,))
+
+        num_collection = curs.fetchone()[0]
+
+        print(f"Collection Count: {num_collection}")
+
+    except Exception as e:
+        
+        print("Error viewing profile")
+        conn.rollback()    
+
+
+
+
+
+
+    
