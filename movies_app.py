@@ -113,9 +113,11 @@ def main(curs, conn):
                 elif command == "view followers":
                     print()
                     view_followers(user_session, curs, conn)
-                elif command == "view following":
+                elif command == "view followed":
+                    print()
                     view_followed(user_session, curs, conn)
                 elif command == "view top 10 movies":
+                    print()
                     view_top_10(user_session, curs, conn)
                 else:
                     print("Invalid command")
