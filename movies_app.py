@@ -5,9 +5,8 @@ from movies.auth import (
 from movies.user import (
     follow,
     unfollow,
-    view_profile,
-    #view_followed,
-    #view_followers
+    view_followed,
+    view_followers
 )
 from movies.movie import (
     watch_movie,
@@ -111,9 +110,6 @@ def main(curs, conn):
                 elif command == "total collections":
                     print()
                     total_collections(user_session, curs, conn)
-                elif command == "view profile":
-                    print()
-                    view_profile(user_session, curs, conn)
                 elif command == "view followers":
                     print()
                     view_followers(user_session, curs, conn)
