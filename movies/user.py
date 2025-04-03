@@ -63,7 +63,7 @@ def unfollow(user_session, curs, conn):
     if no account is found or if they are not following the user.      
     """
     
-    print("Unfollow a user")
+    print("Unfollow A User")
     user_email = input("Enter users email: ").strip()
     
     try:
