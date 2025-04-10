@@ -1,4 +1,6 @@
 import datetime
+import bcrypt
+from getpass import getpass 
 
 def create_account(user_session, curs, conn):
     """  
@@ -33,7 +35,10 @@ def create_account(user_session, curs, conn):
             
                 break  # username is unique
         
-        password = input("Password: ").strip()
+        raw_pass = getpass("Password: ").encode('utf-8').strip()
+        password = bcrypt.hashpw(raw_pass, bcrypt.gensalt())
+
+        #print("Hashed password:", password.decode())
         
         email = None
         # ensure unique email
@@ -60,7 +65,7 @@ def create_account(user_session, curs, conn):
         # adds the users account to users
         # users(userid, username, firstname, lastname, region, dob, password, creationdate)
         curs.execute("INSERT INTO users(userid, username, firstname, lastname, region, dob, password, creationdate) VALUES (%s, %s, %s, %s, %s, %s, %s, %s)",
-                     (uid, username, firstname, lastname, region, dob, password, creation_date))
+                     (uid, username, firstname, lastname, region, dob, password.decode(), creation_date))
         
         curs.execute('INSERT INTO email VALUES (%s, %s)', (uid, email))
 
@@ -87,7 +92,7 @@ def login(user_session, curs, conn):
     print("Login your account")
 
     username = input("Username: ")
-    password = input("Password: ")
+    password = getpass("Enter password: ").encode('utf-8')
 
     try:
 
@@ -99,7 +104,7 @@ def login(user_session, curs, conn):
         user = curs.fetchone() 
 
         #checks if user exists and user's password equals to inputted password
-        if user and user[2] == password: 
+        if user and bcrypt.checkpw(password, user[2].encode('utf-8')): 
 
             access_date = datetime.datetime.now()
 
