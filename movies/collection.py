@@ -398,28 +398,5 @@ def rename_collection(user_session, curs, conn):
         conn.rollback()
 
 def total_collections(user_session, curs, conn):
-    """
-    Helper function for User Profile to find how many collection the user owns
-    """
-
-    user_id = user_session["userId"]
-
-    if not user_id:
-        print("Need to be logged in to view collection count")
-        return
-
-    try:
-        curs.execute("""
-            SELECT COUNT(*) FROM collection
-            WHERE userid = %s
-            """,(user_id,))
-
-        total_count = curs.fetchone()[0]
-        print(f"you have {total_count} collections")
-        return total_count
     
-    except Exception as e:
-        print(f"Error retrieving collection count: {e}")
-
-   
     print("you have x number of collections")
