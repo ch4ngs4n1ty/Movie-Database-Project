@@ -348,3 +348,46 @@ def search(user_session, curs, conn):
 
 def view_top_10(user_session, curs, conn):
     print("your top 10 movies are: xyz")
+
+def view_top_20_last_90_days(curs, conn):
+
+    #rolling meaning it updates everyday for new movies in top 20 list
+    print("The Top 20 Most Popular Movies In Last 90 Days")
+
+    try:
+        
+        current_date = datetime.datetime.now()
+
+        ninety_days_ago = current_date - datetime.timedelta(days=90)
+
+        query = f"""
+            SELECT 
+                m.title AS movie_name,
+                COUNT(w.movieid) as watch_count,
+                FROM movie m
+                JOIN watches w on m.movieid = w.movieid
+                WHERE w.datetimewatched >= %s
+                GROUP BY m.movieid, m.movietitle
+                ORDER BY watch_count DESC
+                LIMIT 20;
+                """
+
+        curs.execute(query, ninety_days_ago,)
+
+        top_20_movie = curs.fetchall()
+
+        i = 0
+
+        for movie in top_20_movie:
+
+            i += 1
+
+            movie_name = movie[1]
+            watch_count = movie[2]
+
+            print(f"Movie {i}: {movie_name} with watch count of {watch_count}.")
+
+    except Exception as e:
+
+        print("Error occured finding top 20 movies for last 90 days")
+        conn.rollback
