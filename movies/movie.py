@@ -341,10 +341,10 @@ def search(user_session, curs, conn):
         print(f"Director: {director_name}")
         print(f"Duration: {movie_duration} minutes")
         print(f"MPAA Rating: {mpaa_rating}")
-        print(f"User Rating: {"Unrated" if user_rating is None else user_rating}")
+        print(f"User Rating: {'Unrated' if user_rating is None else user_rating}")
         print(f"Studio: {studio}")
         print(f"Genre: {genre}")
-        print(f"Release Year: {"Unreleased" if release_year is None else release_year}")
+        print(f"Release Year: {'Unreleased' if release_year is None else release_year}")
 
 def view_top_10(user_session, curs, conn):
     print("your top 10 movies are: xyz")
@@ -352,42 +352,47 @@ def view_top_10(user_session, curs, conn):
 def view_top_20_last_90_days(curs, conn):
 
     #rolling meaning it updates everyday for new movies in top 20 list
-    print("The Top 20 Most Popular Movies In Last 90 Days")
+    print("The Top 20 Most Popular Movies In Last 90 Days\n")
 
     try:
         
         current_date = datetime.datetime.now()
 
-        ninety_days_ago = current_date - datetime.timedelta(days=90)
+        print(current_date)
+
+        ninety_days_ago = (current_date - datetime.timedelta(days=90)).strftime('%Y-%m-%d')
 
         query = f"""
             SELECT 
                 m.title AS movie_name,
-                COUNT(w.movieid) as watch_count,
+                COUNT(w.movieid) as watch_count
                 FROM movie m
                 JOIN watches w on m.movieid = w.movieid
                 WHERE w.datetimewatched >= %s
-                GROUP BY m.movieid, m.movietitle
+                GROUP BY m.movieid, m.title
                 ORDER BY watch_count DESC
                 LIMIT 20;
                 """
 
-        curs.execute(query, ninety_days_ago,)
+        curs.execute(query, (ninety_days_ago,))
 
         top_20_movie = curs.fetchall()
+
+        print(len(top_20_movie))
 
         i = 0
 
         for movie in top_20_movie:
 
+            movie_name = movie[0]
+            watch_count = movie[1]
+
             i += 1
 
-            movie_name = movie[1]
-            watch_count = movie[2]
-
-            print(f"Movie {i}: {movie_name} with watch count of {watch_count}.")
+            print(f"Movie {i}: {movie_name} with watch count of {watch_count}.\n")
 
     except Exception as e:
+        
+        print(f"Error viewing top 20 movies last 90 days: {e}")
 
-        print("Error occured finding top 20 movies for last 90 days")
-        conn.rollback
+        conn.rollback()
