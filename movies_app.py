@@ -15,8 +15,10 @@ from movies.movie import (
     rate_movie,
     search,
     view_top_10,
-    view_top_20_last_90_days
+    view_top_20_last_90_days,
+    view_top_5_new_releases
 )
+
 from movies.collection import (
     add_to_collection,
     remove_from_collection,
@@ -127,6 +129,9 @@ def main(curs, conn):
                 elif command == "view top 20 (among users)":
                     print()
                     view_top_20_movies_among_users(user_session, curs, conn)
+                elif command == "view top 5 new releases":
+                    print()
+                    view_top_5_new_releases(curs, conn)
                 else:
                     print("Invalid command")
                     help()
@@ -157,5 +162,6 @@ view profile - view users profile
 view top 10 - view top 10 movies based on rating, plays, or both
 view top 20 (last 90 days) - view top 20 most popular movies in the last 90 days
 view top 20 (among users) - view the top 20 most popular movies among users followed by the current user
+view top 5 new releases - view the top 5 new releases of the month (calendar month)
 """
     print(help_msg)

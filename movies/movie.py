@@ -396,3 +396,31 @@ def view_top_20_last_90_days(curs, conn):
         print(f"Error viewing top 20 movies last 90 days: {e}")
 
         conn.rollback()
+
+#Find the top 5 new releases of the month (calendar month)
+
+def view_top_5_new_releases(curs, conn):
+
+    print("View Top 5 New Releases Of The Month")
+
+    try:
+
+        current_date = datetime.datetime.now()
+
+        current_month = current_date.month
+
+        print(current_month)
+
+        query = f"""
+
+
+
+
+
+                """
+
+    except Exception as e:
+
+        print(f"Error viewing top 5 new releases of the month: {e}")
+
+        conn.rollback()
