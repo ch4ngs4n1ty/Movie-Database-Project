@@ -376,13 +376,13 @@ def view_top_20_last_90_days(curs, conn):
 
         curs.execute(query, (ninety_days_ago,))
 
-        top_20_movie = curs.fetchall()
+        top_20_list = curs.fetchall()
 
         #print(len(top_20_movie))
 
         i = 0
 
-        for movie in top_20_movie:
+        for movie in top_20_list:
 
             movie_name = movie[0]
             watch_count = movie[1]
