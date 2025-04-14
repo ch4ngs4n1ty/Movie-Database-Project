@@ -6,7 +6,8 @@ from movies.user import (
     follow,
     unfollow,
     view_followed,
-    view_followers
+    view_followers,
+    view_top_20_movies_among_users
 )
 from movies.movie import (
     watch_movie,
@@ -123,6 +124,9 @@ def main(curs, conn):
                 elif command == "view top 20 (last 90 days)":
                     print()
                     view_top_20_last_90_days(curs, conn)
+                elif command == "view top 20 (among users)":
+                    print()
+                    view_top_20_movies_among_users(user_session, curs, conn)
                 else:
                     print("Invalid command")
                     help()
@@ -152,5 +156,6 @@ view followers - view number of followers you have
 view profile - view users profile
 view top 10 - view top 10 movies based on rating, plays, or both
 view top 20 (last 90 days) - view top 20 most popular movies in the last 90 days
+view top 20 (among users) - view the top 20 most popular movies among users followed by the current user
 """
     print(help_msg)

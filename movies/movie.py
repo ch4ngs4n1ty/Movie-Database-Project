@@ -358,9 +358,9 @@ def view_top_20_last_90_days(curs, conn):
         
         current_date = datetime.datetime.now()
 
-        print(current_date)
-
         ninety_days_ago = (current_date - datetime.timedelta(days=90)).strftime('%Y-%m-%d')
+
+        #print(datetime.timedelta(days=90)).strftime('%Y-%m-%d')
 
         query = f"""
             SELECT 
@@ -378,7 +378,7 @@ def view_top_20_last_90_days(curs, conn):
 
         top_20_movie = curs.fetchall()
 
-        print(len(top_20_movie))
+        #print(len(top_20_movie))
 
         i = 0
 
