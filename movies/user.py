@@ -63,7 +63,7 @@ def unfollow(user_session, curs, conn):
     if no account is found or if they are not following the user.      
     """
     
-    print("Unfollow a user")
+    print("Unfollow A User")
     user_email = input("Enter users email: ").strip()
     
     try:
@@ -117,3 +117,53 @@ def unfollow(user_session, curs, conn):
         
         print("Error unfollowing user")
         conn.rollback()
+
+def view_followed(user_session, curs, conn):
+    """
+    Helper function for User Profile to find total users followed
+    """
+
+    user_id = user_session["userId"]
+
+    if not user_id:
+        print("Need to be logged in to view followed count")
+        return
+
+    try:
+        curs.execute("""
+            SELECT COUNT(*) FROM follows
+            WHERE follower = %s
+            """,(user_id,))
+
+        total_following = curs.fetchone()[0]
+        print(f"you follow {total_follows} people")
+        return total_following
+    
+    except Exception as e:
+        print(f"Error retrieving followed count: {e}")
+
+def view_followers(user_session, curs, conn):
+    """
+    Helper function for User Profile to find total followers
+    """
+
+    user_id = user_session["userId"]
+
+    if not user_id:
+        print("Need to be logged in to view follower count")
+        return
+
+    try:
+        curs.execute("""
+            SELECT COUNT(*) FROM follows
+            WHERE followee = %s
+            """,(user_id,))
+
+        total_followers = curs.fetchone()[0]
+        print(f"you have {total_followers} followers")
+        return total_followers
+    
+    except Exception as e:
+        print(f"Error retrieving follower count: {e}")
+
+    print("you have x followers")

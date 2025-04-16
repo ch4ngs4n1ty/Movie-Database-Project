@@ -4,13 +4,16 @@ from movies.auth import (
 )
 from movies.user import (
     follow,
-    unfollow
+    unfollow,
+    view_followed,
+    view_followers
 )
 from movies.movie import (
     watch_movie,
     watch_collection,
     rate_movie,
-    search
+    search,
+    view_top_10
 )
 from movies.collection import (
     add_to_collection,
@@ -18,7 +21,8 @@ from movies.collection import (
     delete_collection,
     view_collections,
     create_collection,
-    rename_collection
+    rename_collection,
+    total_collections
 )
 
 def main(curs, conn):
@@ -103,7 +107,18 @@ def main(curs, conn):
                 elif command == "rename collection":
                     print()
                     rename_collection(user_session, curs, conn)
-
+                elif command == "total collections":
+                    print()
+                    total_collections(user_session, curs, conn)
+                elif command == "view followers":
+                    print()
+                    view_followers(user_session, curs, conn)
+                elif command == "view followed":
+                    print()
+                    view_followed(user_session, curs, conn)
+                elif command == "view top 10 movies":
+                    print()
+                    view_top_10(user_session, curs, conn)
                 else:
                     print("Invalid command")
                     help()
@@ -124,5 +139,13 @@ delete collection- delete a collection
 view collections - view all collections
 create collection - create a collection
 rename collection - rename a collection
+
+
+PROFILE INFORMATION
+total collections - view total number of collections
+view followed - view number of users you follow
+view followers - view number of followers you have
+view profile - view users profile
+view top 10 - view top 10 movies based on rating, plays, or both
 """
     print(help_msg)
