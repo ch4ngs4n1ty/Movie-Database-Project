@@ -27,7 +27,10 @@ from sshtunnel import SSHTunnelForwarder
 from dotenv import load_dotenv
 
 from faker import Faker
+from datetime import date
 import random
+
+from movies import movie, user
 
 msg1 = '✅ Running modify_database..........................[1/3]'
 msg2 = '✅ Data created.....................................[2/3]'
@@ -65,6 +68,22 @@ def create_data(curs, conn, quantity: int) -> list[tuple[str, str]]:
         # email = a + f'{random.randint(1,1000)}'+ random.choice(['@gmail.com', '@yahoo.com', '@outlook.com', '@hotmail.com'])
         # t = (email, f'u{i}')
 
+
+        curs.execute('SELECT dob FROM users WHERE userid = %s', (f'u{i}',))
+        a = curs.fetchone() 
+
+        curs.execute('SELECT datetimewatched FROM watches WHERE userid = %s', (f'u{i}',))
+        b = curs.fetchone() 
+
+        date1 = date(a[0].year, a[0].month, a[0].day)
+        if (b): 
+            date2 = date(b[0].year, b[0].month, b[0].day)
+            s = str(fake.date_time_between(date1, date2, tzinfo=None))
+        else: 
+            s = str(fake.date_time_between(date1, 'now', tzinfo=None))
+
+
+        t = (s, f'u{i}')
         ######################################################### 
         #################### end of customize area ##############
         ######################################################### 
@@ -88,13 +107,15 @@ def modify_database(curs: psycopg.Cursor, conn: psycopg.Connection) -> None:
     print(msg1)
 
     # TODO: Modify the entires to the size of the table you are iterating through
+
     entries = 5000
 
     tuples = create_data(curs, conn, entries)
     print(msg2)
 
     # TODO: Change the sql statement depending on what you want to do
-    sql_statement = 'INSERT INTO email (email, userid) VALUES (%s, %s)'
+    # sql_statement = 'INSERT INTO email (email, userid) VALUES (%s, %s)'
+    sql_statement = 'UPDATE users SET creationdate = %s WHERE userid = %s'
 
     try:
         curs.executemany(sql_statement, tuples)
@@ -103,6 +124,79 @@ def modify_database(curs: psycopg.Cursor, conn: psycopg.Connection) -> None:
     except Exception as e:
         conn.rollback()
         print(f'❌ Error updating database: {e}')
+
+
+"""
+Fetches data from the database to gather analytics. 
+"""
+def fetch_data(curs: psycopg.Cursor, conn: psycopg.Connection): 
+    print('✅ Running fetch_data..........................[1/3]')
+
+    #TODO: Use Queries to parse and fetch pieces of data from the database to prove hypothesis. 
+    genres_dict = {}
+
+    curr_date = date.today() 
+
+    # Query to get number of rows in the table to loop over. 
+    sql_statement1 = 'SELECT COUNT(*) FROM users'
+    try: 
+        curs.execute(sql_statement1)
+        entries = curs.fetchone()[0]  # type: ignore
+    except Exception as e: 
+        conn.rollback()
+        print(f'❌ Error fetching from database: {e}')
+
+    print('✅ Fetching Genres.............................[2/3]')
+
+    entries = 5000
+
+    for i in range(1, entries + 1): 
+        try: 
+            curs.execute('SELECT dob FROM users WHERE userid = %s', (f'u{i}',))
+            user_dob = curs.fetchone()[0] # type: ignore
+        except Exception as e: 
+            conn.rollback
+            print(f'❌ Error fetching dob from database: {e}')
+
+        user_age = curr_date.year - user_dob.year 
+        if (user_dob.month > curr_date.month): 
+            user_age -= 1
+        elif (user_dob.month == curr_date.month and user_dob.day > curr_date.day): 
+            user_age -= 1
+
+        movie_id = []
+        if (user_age >= 29 and user_age <= 44): 
+            try: 
+                curs.execute('SELECT movieid FROM watches WHERE userid = %s', (f'u{i}',))
+                movie_id = curs.fetchall() # type: ignore
+            except Exception as e: 
+                conn.rollback
+                print(f'❌ Error fetching movieid from database: {e}')
+
+        for j in range(0, len(movie_id)): 
+            try: 
+                curs.execute('SELECT genreid FROM contains WHERE movieid = %s', movie_id[j])
+                genre_id = curs.fetchone() # type: ignore
+            except Exception as e: 
+                conn.rollback
+                print(f'❌ Error fetching genreid from database: {e}')
+
+            if (genre_id): 
+                try: 
+                    curs.execute('SELECT genrename FROM genre WHERE genreid = %s', genre_id)
+                    genre_name = curs.fetchone()
+                except Exception as e: 
+                    conn.rollback
+                    print(f'❌ Error fetching genrename from database: {e}')
+
+                genres_dict[genre_name[0]] = genres_dict.get(genre_name[0], 0) + 1 # type: ignore
+                # print(f'{movie_id[j]}, {genre_name[0]}: {genres_dict.get(genre_name[0], 0)}') # type: ignore
+
+    print('✅ Printing analytics..........................[3/3]')
+
+    for key, value in genres_dict.items(): 
+        print(f'{key}: {value}')
+
 
 def main():
     load_dotenv()
@@ -116,14 +210,14 @@ def main():
                                 ssh_username=username,
                                 ssh_password=password,
                                 remote_bind_address=('127.0.0.1', 5432)) as server:
-            server.start()
+            server.start() # type: ignore
             print("SSH tunnel established")
             params = {
                 'dbname': dbName,
                 'user': username,
                 'password': password,
                 'host': 'localhost',
-                'port': server.local_bind_port
+                'port': server.local_bind_port # type: ignore
             }
 
             conn = psycopg.connect(**params)
@@ -131,7 +225,8 @@ def main():
             print("Database connection established")
 
             #DB work here....
-            modify_database(curs, conn)
+            # modify_database(curs, conn)
+            fetch_data(curs, conn) 
 
             conn.close()
         print("Database connection closed.")
