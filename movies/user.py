@@ -136,7 +136,7 @@ def view_followed(user_session, curs, conn):
             """,(user_id,))
 
         total_following = curs.fetchone()[0]
-        print(f"you follow {total_follows} people")
+        print(f"you follow {total_following} people")
         return total_following
     
     except Exception as e:
