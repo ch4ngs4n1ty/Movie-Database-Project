@@ -6,7 +6,8 @@ from movies.user import (
     follow,
     unfollow,
     view_followed,
-    view_followers
+    view_followers,
+    view_profile
 )
 from movies.movie import (
     watch_movie,
@@ -119,6 +120,9 @@ def main(curs, conn):
                 elif command == "view top 10 movies":
                     print()
                     view_top_10(user_session, curs, conn)
+                elif command == "view profile":
+                    print()
+                    view_profile(user_session, curs, conn)
                 else:
                     print("Invalid command")
                     help()

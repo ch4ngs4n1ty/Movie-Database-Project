@@ -1,3 +1,6 @@
+from movies.collection import total_collections
+from movies.movie import view_top_10
+
 def follow(user_session, curs, conn):
     """
     Allows the user to follow another user.  
@@ -136,7 +139,7 @@ def view_followed(user_session, curs, conn):
             """,(user_id,))
 
         total_following = curs.fetchone()[0]
-        print(f"you follow {total_follows} people")
+        print(f"you follow {total_following} people")
         return total_following
     
     except Exception as e:
@@ -167,3 +170,19 @@ def view_followers(user_session, curs, conn):
         print(f"Error retrieving follower count: {e}")
 
     print("you have x followers")
+
+def view_profile(user_session, curs, conn):
+    """
+    displays all the funtionality of the user (follower count, followers count, total collections, top 10 watched)
+    """
+
+    user_id = user_session["userId"]
+
+    if not user_id:
+        print("Must be logged in to view profile details")
+        return
+    
+    view_followed(user_session, curs, conn)
+    view_followers(user_session, curs, conn)
+    total_collections(user_session, curs, conn)
+    view_top_10(user_session, curs, conn)
