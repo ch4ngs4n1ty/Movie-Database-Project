@@ -145,7 +145,7 @@ def view_followed(user_session, curs, conn):
 def view_followers(user_session, curs, conn):
     """
     Helper function for User Profile to find total followers
-    """
+    """ 
 
     user_id = user_session["userId"]
 

@@ -405,19 +405,47 @@ def view_top_5_new_releases(curs, conn):
 
     try:
 
-        current_date = datetime.datetime.now()
+        #current_date = datetime.datetime.now()
 
-        current_month = current_date.month
+        #current_month = current_date.month
 
-        print(current_month)
+        #
+
+        #print(current_month)
+
+        get_month = input("Input the month (1-12): ")
+        get_year = input("Inputer the year (YYYY): ")
+        print("\n")
 
         query = f"""
-
-
-
-
-
+            SELECT
+                m.title AS movie_name,
+                COUNT(w.movieid) as watch_count
+                FROM movie m
+                JOIN watches w on m.movieid = w.movieid
+                JOIN releasedon r on m.movieid = r.movieid
+                WHERE EXTRACT(YEAR FROM r.releasedate) = %s
+                AND EXTRACT(MONTH FROM r.releasedate) = %s
+                GROUP BY m.movieid, m.title
+                ORDER BY watch_count DESC
+                LIMIT 5;
                 """
+
+        curs.execute(query, (get_year, get_month))
+
+        top_5_list = curs.fetchall()
+
+        i = 0
+
+        for movie in top_5_list:
+
+            i += 1
+
+            movie_name = movie[0]
+            watch_count = movie[1]
+
+            print(f"Movie {i}: {movie_name} with watch count of {watch_count}.\n")
+
 
     except Exception as e:
 
