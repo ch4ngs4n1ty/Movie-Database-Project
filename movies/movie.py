@@ -341,10 +341,114 @@ def search(user_session, curs, conn):
         print(f"Director: {director_name}")
         print(f"Duration: {movie_duration} minutes")
         print(f"MPAA Rating: {mpaa_rating}")
-        print(f"User Rating: {"Unrated" if user_rating is None else user_rating}")
+        print(f"User Rating: {'Unrated' if user_rating is None else user_rating}")
         print(f"Studio: {studio}")
         print(f"Genre: {genre}")
-        print(f"Release Year: {"Unreleased" if release_year is None else release_year}")
+        print(f"Release Year: {'Unreleased' if release_year is None else release_year}")
 
 def view_top_10(user_session, curs, conn):
     print("your top 10 movies are: xyz")
+
+def view_top_20_last_90_days(curs, conn):
+
+    #rolling meaning it updates everyday for new movies in top 20 list
+    print("The Top 20 Most Popular Movies In Last 90 Days\n")
+
+    try:
+        
+        current_date = datetime.datetime.now()
+
+        ninety_days_ago = (current_date - datetime.timedelta(days=90)).strftime('%Y-%m-%d')
+
+        #print(datetime.timedelta(days=90)).strftime('%Y-%m-%d')
+
+        query = f"""
+            SELECT 
+                m.title AS movie_name,
+                COUNT(w.movieid) as watch_count
+                FROM movie m
+                JOIN watches w on m.movieid = w.movieid
+                WHERE w.datetimewatched >= %s
+                GROUP BY m.movieid, m.title
+                ORDER BY watch_count DESC
+                LIMIT 20;
+                """
+
+        curs.execute(query, (ninety_days_ago,))
+
+        top_20_list = curs.fetchall()
+
+        #print(len(top_20_movie))
+
+        i = 0
+
+        for movie in top_20_list:
+
+            movie_name = movie[0]
+            watch_count = movie[1]
+
+            i += 1
+
+            print(f"Movie {i}: {movie_name} with watch count of {watch_count}.\n")
+
+    except Exception as e:
+        
+        print(f"Error viewing top 20 movies last 90 days: {e}")
+
+        conn.rollback()
+
+#Find the top 5 new releases of the month (calendar month)
+
+def view_top_5_new_releases(curs, conn):
+
+    print("View Top 5 New Releases Of The Month")
+
+    try:
+
+        #current_date = datetime.datetime.now()
+
+        #current_month = current_date.month
+
+        #
+
+        #print(current_month)
+
+        get_month = input("Input the month (1-12): ")
+        get_year = input("Inputer the year (YYYY): ")
+        print("\n")
+
+        query = f"""
+            SELECT
+                m.title AS movie_name,
+                COUNT(w.movieid) as watch_count
+                FROM movie m
+                JOIN watches w on m.movieid = w.movieid
+                JOIN releasedon r on m.movieid = r.movieid
+                WHERE EXTRACT(YEAR FROM r.releasedate) = %s
+                AND EXTRACT(MONTH FROM r.releasedate) = %s
+                GROUP BY m.movieid, m.title
+                ORDER BY watch_count DESC
+                LIMIT 5;
+                """
+
+        curs.execute(query, (get_year, get_month))
+
+        top_5_list = curs.fetchall()
+
+        i = 0
+
+        for movie in top_5_list:
+
+            i += 1
+
+            movie_name = movie[0]
+            watch_count = movie[1]
+
+            print(f"Movie {i}: {movie_name} with watch count of {watch_count}.\n")
+
+
+    except Exception as e:
+
+        print(f"Error viewing top 5 new releases of the month: {e}")
+
+        conn.rollback()

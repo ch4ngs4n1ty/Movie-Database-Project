@@ -145,7 +145,7 @@ def view_followed(user_session, curs, conn):
 def view_followers(user_session, curs, conn):
     """
     Helper function for User Profile to find total followers
-    """
+    """ 
 
     user_id = user_session["userId"]
 
@@ -167,3 +167,50 @@ def view_followers(user_session, curs, conn):
         print(f"Error retrieving follower count: {e}")
 
     print("you have x followers")
+
+
+def view_top_20_movies_among_users(user_session, curs, conn):
+
+    print("The top 20 most popular movies among users followed by the current user")
+
+    try:
+
+        user_id = user_session["userId"]
+
+        query = f"""
+            SELECT
+                m.title AS movie_name,
+                COUNT(w.movieid) AS watch_count
+                FROM follows f
+                JOIN watches w ON f.followee = w.userid
+                JOIN movie m ON w.movieid = m.movieid
+                WHERE f.follower = %s
+                GROUP BY m.movieid, m.title
+                ORDER BY watch_count DESC
+                LIMIT 20;
+                """
+
+        curs.execute(query, (user_id,))
+
+        top_20_list = curs.fetchall()
+
+        print(top_20_list)
+
+        i = 0
+
+        for movie in top_20_list:
+
+            movie_name = movie[0]
+            watch_count = movie[1]
+
+            i += 1
+
+            print(f"Movie {i}: {movie_name} with watch count of {watch_count}.\n")
+
+    except Exception as e:
+
+        print(f"Error viewing top 20 most popular movies among users followed by the current user: {e}")
+
+        conn.rollback()
+
+
