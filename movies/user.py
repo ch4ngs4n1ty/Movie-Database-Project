@@ -1,6 +1,8 @@
 from movies.collection import total_collections
 from movies.movie import view_top_10
 
+from movies.collection import total_collections
+
 def follow(user_session, curs, conn):
     """
     Allows the user to follow another user.  
@@ -120,6 +122,7 @@ def unfollow(user_session, curs, conn):
         
         print("Error unfollowing user")
         conn.rollback()
+
 
 def view_followed(user_session, curs, conn):
     """
