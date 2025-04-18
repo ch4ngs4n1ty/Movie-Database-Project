@@ -29,6 +29,7 @@ from movies.collection import (
     view_collections,
     create_collection,
     rename_collection,
+    total_collections
 )
 
 def main(curs, conn):
