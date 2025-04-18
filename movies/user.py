@@ -1,4 +1,5 @@
-from collection import total_collections
+from movies.collection import total_collections
+
 
 def follow(user_session, curs, conn):
     """
@@ -121,6 +122,9 @@ def unfollow(user_session, curs, conn):
         conn.rollback()
 
 def view_profile(user_session, curs, conn): 
+    """
+
+    """
     total_collections(user_session, curs, conn)
     view_followers(user_session, curs, conn)
     view_followed(user_session, curs, conn)
