@@ -1,6 +1,5 @@
 from movies.collection import total_collections
 
-
 def follow(user_session, curs, conn):
     """
     Allows the user to follow another user.  
