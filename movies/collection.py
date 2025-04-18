@@ -398,12 +398,16 @@ def rename_collection(user_session, curs, conn):
         conn.rollback()
 
 def total_collections(user_session, curs, conn):
-    curs.execute("""
-        SELECT COUNT(*) as count 
-        FROM collection
-        WHERE userid = %s
-    """, (user_session["userId"],))
-    num_of_collections = curs.fetchone()
+    try: 
+        curs.execute("""
+            SELECT COUNT(*) as count 
+            FROM collection
+            WHERE userid = %s
+        """, (user_session["userId"],))
+        num_of_collections = curs.fetchone()
+    except Exception as e: 
+        conn.rollback
+        print(f'❌ Error counting total collections: {e}') 
 
     print(f'You have {num_of_collections[0]} collections.')
     

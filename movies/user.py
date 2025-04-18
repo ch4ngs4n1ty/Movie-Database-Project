@@ -136,7 +136,7 @@ def view_followed(user_session, curs, conn):
             """,(user_id,))
 
         total_following = curs.fetchone()[0]
-        print(f"you follow {total_following} people")
+        print(f"You follow {total_following} people.")
         return total_following
     
     except Exception as e:
@@ -160,14 +160,13 @@ def view_followers(user_session, curs, conn):
             """,(user_id,))
 
         total_followers = curs.fetchone()[0]
-        print(f"you have {total_followers} followers")
+        print(f"You have {total_followers} followers.")
         return total_followers
     
     except Exception as e:
         print(f"Error retrieving follower count: {e}")
 
-    print("you have x followers")
-
+    # print("you have x followers")
 
 def view_top_20_movies_among_users(user_session, curs, conn):
 

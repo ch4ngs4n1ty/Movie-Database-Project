@@ -115,12 +115,15 @@ def main(curs, conn):
                 elif command == "total collections":
                     print()
                     total_collections(user_session, curs, conn)
-                elif command == "view followers":
-                    print()
-                    view_followers(user_session, curs, conn)
                 elif command == "view followed":
                     print()
                     view_followed(user_session, curs, conn)
+                elif command == "view followers":
+                    print()
+                    view_followers(user_session, curs, conn)
+                elif command == "view profile": 
+                    print() 
+
                 elif command == "view top 10 movies":
                     print()
                     view_top_10(user_session, curs, conn)
