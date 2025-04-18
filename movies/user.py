@@ -139,7 +139,7 @@ def view_followed(user_session, curs, conn):
             """,(user_id,))
 
         total_following = curs.fetchone()[0]
-        print(f"you follow {total_following} people")
+        print(f"You follow {total_following} people.")
         return total_following
     
     except Exception as e:
@@ -163,7 +163,7 @@ def view_followers(user_session, curs, conn):
             """,(user_id,))
 
         total_followers = curs.fetchone()[0]
-        print(f"you have {total_followers} followers")
+        print(f"You have {total_followers} followers.")
         return total_followers
     
     except Exception as e:
@@ -188,7 +188,7 @@ def view_profile(user_session, curs, conn):
 
 def view_top_20_movies_among_users(user_session, curs, conn):
 
-    print("The top 20 most popular movies among users followed by the current user")
+    print("The top 20 most popular movies among users followed by the current user\n")
 
     try:
 
@@ -211,8 +211,6 @@ def view_top_20_movies_among_users(user_session, curs, conn):
 
         top_20_list = curs.fetchall()
 
-        print(top_20_list)
-
         i = 0
 
         for movie in top_20_list:
@@ -222,12 +220,10 @@ def view_top_20_movies_among_users(user_session, curs, conn):
 
             i += 1
 
-            print(f"Movie {i}: {movie_name} with watch count of {watch_count}.\n")
+            print(f"Movie {i}: {movie_name} with watch count of {watch_count}.")
 
     except Exception as e:
 
         print(f"Error viewing top 20 most popular movies among users followed by the current user: {e}")
 
         conn.rollback()
-
-
