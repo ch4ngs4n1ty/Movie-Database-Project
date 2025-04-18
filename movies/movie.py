@@ -341,10 +341,212 @@ def search(user_session, curs, conn):
         print(f"Director: {director_name}")
         print(f"Duration: {movie_duration} minutes")
         print(f"MPAA Rating: {mpaa_rating}")
-        print(f"User Rating: {"Unrated" if user_rating is None else user_rating}")
+        print(f"User Rating: {'Unrated' if user_rating is None else user_rating}")
         print(f"Studio: {studio}")
         print(f"Genre: {genre}")
-        print(f"Release Year: {"Unreleased" if release_year is None else release_year}")
+        print(f"Release Year: {'Unreleased' if release_year is None else release_year}")
 
 def view_top_10(user_session, curs, conn):
-    print("your top 10 movies are: xyz")
+    """
+    Helper function allow users to query their top 10 movies 
+    by Highest rated, most watched or combination of both
+    """
+    
+    print("View your top 10 movies by:")
+    print("1. Highest Rating")
+    print("2. Most watched")
+    print("3. Both")
+
+    search_by = input("Select (1-3): ").strip()
+
+    if search_by not in ["1", "2", "3"]:
+        print("Invalid option")
+        return
+    print("DEBUG - user_session:", user_session)
+    userid = user_session.get("userId")
+
+    if search_by == "1":
+        order_clause = "ORDER BY user_rating DESC NULLS LAST, title"
+        rating_join = "INNER JOIN rates r ON m.movieid = r.movieid AND r.userid = %s"
+        watch_join = "LEFT JOIN watches w ON m.movieid = w.movieid AND w.userid = %s"
+        where_clause = ""
+        
+    elif search_by == "2":
+        rating_join = "LEFT JOIN rates r ON m.movieid = r.movieid AND r.userid = %s"
+        watch_join = "INNER JOIN watches w ON m.movieid = w.movieid AND w.userid = %s"
+        where_clause = ""
+        order_clause = "ORDER BY watch_count DESC, title"
+
+    else:  # search_by == "3":
+        rating_join = "LEFT JOIN rates r ON m.movieid = r.movieid AND r.userid = %s"
+        watch_join = "LEFT JOIN watches w ON m.movieid = w.movieid AND w.userid = %s"
+        where_clause = "WHERE r.starrating IS NOT NULL OR w.userid IS NOT NULL"
+        order_clause = "ORDER BY user_rating DESC NULLS LAST, watch_count DESC, title"
+    
+    base_query = f"""
+        SELECT
+            m.movieid,
+            m.title,
+            m.duration,
+            m.mpaarating,
+            ROUND(MAX(r.starrating), 1) AS user_rating,
+            COUNT(w.userid) AS watch_count,
+            STRING_AGG(DISTINCT CONCAT(mp.firstname, ' ', mp.lastname), ', ') AS cast_members,
+            STRING_AGG(DISTINCT CONCAT(dp.firstname, ' ', dp.lastname), ', ') AS director_name,
+            STRING_AGG(DISTINCT s.studioname, ', ') AS studios,
+            STRING_AGG(DISTINCT g.genrename, ', ') AS genres,
+            EXTRACT(YEAR FROM ro.releasedate) AS release_year
+
+        FROM
+            Movie m
+            LEFT JOIN starsin si ON m.movieid = si.movieid
+            LEFT JOIN moviepeople mp ON si.personid = mp.personid
+            LEFT JOIN directs dir ON m.movieid = dir.movieid
+            LEFT JOIN moviepeople dp ON dir.personid = dp.personid
+            {rating_join}
+            LEFT JOIN created c ON m.movieid = c.movieid
+            LEFT JOIN studios s ON c.studioid = s.studioid
+            LEFT JOIN contains co ON m.movieid = co.movieid
+            LEFT JOIN genre g ON co.genreid = g.genreid
+            LEFT JOIN releasedon ro ON m.movieid = ro.movieid
+            {watch_join}
+        {where_clause}
+        GROUP BY
+            m.movieid, m.title, m.duration, m.mpaarating, ro.releasedate
+        {order_clause}
+        LIMIT 10
+    """
+
+    try:
+        curs.execute(base_query, (userid, userid))
+        result_list = curs.fetchall()
+
+        print("\nTop 10 Movies Based on Your Choice:\n")
+        if not result_list:
+            print("No movies found. Watch or rate some movies to see your top picks!")
+            return
+
+        for row in result_list:
+            (movieid, title, duration, mpaa, rating, watch_count,
+            cast, director, studios, genres, release_year) = row
+
+            print("-" * 40)
+            print(f"Title: {title}")
+            print(f"Duration: {duration} mins")
+            print(f"MPAA Rating: {mpaa}")
+            print(f"Your Rating: {'Unrated' if rating is None else rating}")
+            print(f"Times Watched: {watch_count}")
+            print(f"Cast: {cast}")
+            print(f"Director: {director}")
+            print(f"Studios: {studios}")
+            print(f"Genres: {genres}")
+            print(f"Release Year: {'Unreleased' if release_year is None else int(release_year)}")
+
+    except Exception as e:
+        print("An error occurred while retrieving your top 10 movies:")
+        print(e)
+        return
+
+def view_top_20_last_90_days(curs, conn):
+
+    #rolling meaning it updates everyday for new movies in top 20 list
+    print("The Top 20 Most Popular Movies In Last 90 Days\n")
+
+    try:
+        
+        current_date = datetime.datetime.now()
+
+        ninety_days_ago = (current_date - datetime.timedelta(days=90)).strftime('%Y-%m-%d')
+
+        #print(datetime.timedelta(days=90)).strftime('%Y-%m-%d')
+
+        query = f"""
+            SELECT 
+                m.title AS movie_name,
+                COUNT(w.movieid) as watch_count
+                FROM movie m
+                JOIN watches w on m.movieid = w.movieid
+                WHERE w.datetimewatched >= %s
+                GROUP BY m.movieid, m.title
+                ORDER BY watch_count DESC
+                LIMIT 20;
+                """
+
+        curs.execute(query, (ninety_days_ago,))
+
+        top_20_list = curs.fetchall()
+
+        #print(len(top_20_movie))
+
+        i = 0
+
+        for movie in top_20_list:
+
+            movie_name = movie[0]
+            watch_count = movie[1]
+
+            i += 1
+
+            print(f"Movie {i}: {movie_name} with watch count of {watch_count}.\n")
+
+    except Exception as e:
+        
+        print(f"Error viewing top 20 movies last 90 days: {e}")
+
+        conn.rollback()
+
+#Find the top 5 new releases of the month (calendar month)
+
+def view_top_5_new_releases(curs, conn):
+
+    print("View Top 5 New Releases Of The Month")
+
+    try:
+
+        #current_date = datetime.datetime.now()
+
+        #current_month = current_date.month
+
+        #
+
+        #print(current_month)
+
+        get_month = input("Input the month (1-12): ")
+        get_year = input("Inputer the year (YYYY): ")
+        print("\n")
+
+        query = f"""
+            SELECT
+                m.title AS movie_name,
+                COUNT(w.movieid) as watch_count
+                FROM movie m
+                JOIN watches w on m.movieid = w.movieid
+                JOIN releasedon r on m.movieid = r.movieid
+                WHERE EXTRACT(YEAR FROM r.releasedate) = %s
+                AND EXTRACT(MONTH FROM r.releasedate) = %s
+                GROUP BY m.movieid, m.title
+                ORDER BY watch_count DESC
+                LIMIT 5;
+                """
+
+        curs.execute(query, (get_year, get_month))
+
+        top_5_list = curs.fetchall()
+
+        i = 0
+
+        for movie in top_5_list:
+
+            i += 1
+
+            movie_name = movie[0]
+            watch_count = movie[1]
+
+            print(f"Movie {i}: {movie_name} with watch count of {watch_count}.\n")
+
+
+    except Exception as e:
+
+        print(f"Error viewing top 5 new releases of the month: {e}")
+
+        conn.rollback()
