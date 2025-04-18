@@ -213,4 +213,51 @@ def view_top_20_movies_among_users(user_session, curs, conn):
 
         conn.rollback()
 
+#You must provide the ability to recommend movies to watch to based on your playhistory 
+#(e.g. genre, cast member, rating) and the play history of similar users
+
+def recommend_movies(user_session, curs, conn):
+
+    print("Recommend Movies")
+
+    try:
+    
+        user_id = user_session["userId"]
+
+        print("Recommend Your Movie History By:")
+        print("1. Genre")
+        print("2. Cast Member")
+        print("3. Star Rating")
+
+        sort_by = input("Select (1 - 4): ").strip()
+
+        rec_options = {
+
+            "1": "g.genrename",
+            "2": "LOWER(CONCAT(mp.firstname, ' ', mp.lastname))",  
+            "3": "sr.starrating",   
+        }
+
+        query = f"""
+            SELECT
+                m.title as movie_name
+                COUNT(w.movieid) AS watch_count
+                FROM movies
+
+
+                
+                """
+
+
+    except Exception as e:
+
+
+
+        conn.rollback()
+
+
+
+
+
+
 
