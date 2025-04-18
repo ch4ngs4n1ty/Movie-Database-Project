@@ -171,7 +171,7 @@ def view_followers(user_session, curs, conn):
 
 def view_top_20_movies_among_users(user_session, curs, conn):
 
-    print("The top 20 most popular movies among users followed by the current user")
+    print("The top 20 most popular movies among users followed by the current user\n")
 
     try:
 
@@ -194,8 +194,6 @@ def view_top_20_movies_among_users(user_session, curs, conn):
 
         top_20_list = curs.fetchall()
 
-        print(top_20_list)
-
         i = 0
 
         for movie in top_20_list:
@@ -205,7 +203,7 @@ def view_top_20_movies_among_users(user_session, curs, conn):
 
             i += 1
 
-            print(f"Movie {i}: {movie_name} with watch count of {watch_count}.\n")
+            print(f"Movie {i}: {movie_name} with watch count of {watch_count}.")
 
     except Exception as e:
 
