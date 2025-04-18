@@ -136,14 +136,9 @@ Simple Hypothesis:
 def fetch_simple(curs: psycopg.Cursor, conn: psycopg.Connection): 
     print('✅ Running fetch_simple........................[1/3]')
 
-    #TODO: Use Queries to parse and fetch pieces of data from the database to prove hypothesis. 
     genres_dict = {}
 
-    # curr_date = date.today() 
-
     print('✅ Fetching Genres.............................[2/3]')
-
-    # entries = 5000
 
     try: 
         curs.execute("""
@@ -162,48 +157,6 @@ def fetch_simple(curs: psycopg.Cursor, conn: psycopg.Connection):
     except Exception as e: 
         conn.rollback
         print(f'❌ Error fetching dob from database: {e}')
-
-    # for i in range(1, entries + 1): 
-    #     try: 
-    #         curs.execute('SELECT dob FROM users WHERE userid = %s', (f'u{i}',))
-    #         user_dob = curs.fetchone()[0] # type: ignore
-    #     except Exception as e: 
-    #         conn.rollback
-    #         print(f'❌ Error fetching dob from database: {e}')
-
-    #     user_age = curr_date.year - user_dob.year 
-    #     if (user_dob.month > curr_date.month): 
-    #         user_age -= 1
-    #     elif (user_dob.month == curr_date.month and user_dob.day > curr_date.day): 
-    #         user_age -= 1
-
-    #     movie_id = []
-    #     if (user_age >= 29 and user_age <= 44): 
-    #         try: 
-    #             curs.execute('SELECT movieid FROM watches WHERE userid = %s', (f'u{i}',))
-    #             movie_id = curs.fetchall() # type: ignore
-    #         except Exception as e: 
-    #             conn.rollback
-    #             print(f'❌ Error fetching movieid from database: {e}')
-
-    #     for j in range(0, len(movie_id)): 
-    #         try: 
-    #             curs.execute('SELECT genreid FROM contains WHERE movieid = %s', movie_id[j])
-    #             genre_id = curs.fetchone() # type: ignore
-    #         except Exception as e: 
-    #             conn.rollback
-    #             print(f'❌ Error fetching genreid from database: {e}')
-
-    #         if (genre_id): 
-    #             try: 
-    #                 curs.execute('SELECT genrename FROM genre WHERE genreid = %s', genre_id)
-    #                 genre_name = curs.fetchone()
-    #             except Exception as e: 
-    #                 conn.rollback
-    #                 print(f'❌ Error fetching genrename from database: {e}')
-
-    #             genres_dict[genre_name[0]] = genres_dict.get(genre_name[0], 0) + 1 # type: ignore
-    #             # print(f'{movie_id[j][0]}, {genre_name[0]}: {genres_dict.get(genre_name[0], 0)}') # type: ignore
 
     print('✅ Printing analytics..........................[3/3]')
 
@@ -225,8 +178,6 @@ def fetch_complex(curs: psycopg.Cursor, conn: psycopg.Connection):
     NA_dict = {} 
     AS_dict = {}
 
-    # curr_date = date.today() 
-
     print('✅ Fetching Genres.............................[2/3]')
 
     try: 
@@ -237,142 +188,34 @@ def fetch_complex(curs: psycopg.Cursor, conn: psycopg.Connection):
             JOIN contains c ON w.movieid = c.movieid
             JOIN genre g ON c.genreid = g.genreid
             WHERE 
-                AGE(CURRENT_DATE, u.dob) BETWEEN INTERVAL '29 years' AND INTERVAL '44 years'
+                AGE(CURRENT_DATE, u.dob) > INTERVAL '45 years' 
+                AND u.region = 'NA' 
+                AND (EXTRACT(MONTH FROM w.datetimewatched) BETWEEN 1 AND 3 OR EXTRACT(MONTH FROM w.datetimewatched) BETWEEN 9 AND 12)
             GROUP BY g.genrename
             ORDER BY count DESC; 
         """)
+        results = curs.fetchall()
+        NA_dict = {genre: count for genre, count in results}
+
+        curs.execute("""
+            SELECT g.genrename, COUNT(*) AS count
+            FROM users u
+            JOIN watches w ON u.userid = w.userid
+            JOIN contains c ON w.movieid = c.movieid
+            JOIN genre g ON c.genreid = g.genreid
+            WHERE 
+                AGE(CURRENT_DATE, u.dob) > INTERVAL '45 years' 
+                AND u.region = 'AS' 
+                AND (EXTRACT(MONTH FROM w.datetimewatched) BETWEEN 1 AND 3 OR EXTRACT(MONTH FROM w.datetimewatched) BETWEEN 9 AND 12)
+            GROUP BY g.genrename
+            ORDER BY count DESC; 
+        """)
+        results = curs.fetchall()
+        AS_dict = {genre: count for genre, count in results}
     except Exception as e: 
         conn.rollback
         print(f'❌ Error fetching dob from database: {e}') 
 
-
-    # entries = 5000 
-
-    # Go through all users 
-    # for i in range(1, entries + 1): 
-    #     try: 
-    #         curs.execute('SELECT region FROM users WHERE userid = %s', (f'u{i}',))
-    #         user_region = curs.fetchone()[0] # type: ignore
-    #     except Exception as e: 
-    #         conn.rollback
-    #         print(f'❌ Error fetching dob from database: {e}') 
-
-    #     # If user is from NA. 
-    #     if (user_region == 'NA'): 
-    #         # Get user date of birth and compare to current date to get age. 
-    #         try: 
-    #             curs.execute('SELECT dob FROM users WHERE userid = %s', (f'u{i}',))
-    #             user_dob = curs.fetchone()[0] # type: ignore
-    #         except Exception as e: 
-    #             conn.rollback
-    #             print(f'❌ Error fetching dob from database: {e}') 
-
-    #         user_age = curr_date.year - user_dob.year 
-    #         if (user_dob.month > curr_date.month): 
-    #             user_age -= 1
-    #         elif (user_dob.month == curr_date.month and user_dob.day > curr_date.day): 
-    #             user_age -= 1
-
-    #         # Make sure the user is above the age of 45. If so, get date time watched for when they watched a movie. 
-    #         if (user_age > 45): 
-    #             try: 
-    #                 curs.execute('SELECT datetimewatched FROM watches WHERE userid = %s', (f'u{i}',))
-    #                 date_watched = curs.fetchall() # type: ignore
-    #             except Exception as e: 
-    #                 conn.rollback
-    #                 print(f'❌ Error fetching datetimewatched from database: {e}') 
-
-    #             # If they have a valid date time, as in they watched a movie and it was between the fall and winter seasons. 
-    #             if (date_watched): 
-    #                 for j in range(0, len(date_watched)): 
-    #                     # Get genre of movie to gather analytics. 
-    #                     if ((date_watched[j][0].month >= 1 and date_watched[j][0].month <= 2) or 
-    #                         (date_watched[j][0].month >= 9 and date_watched[j][0].month <= 12)): 
-    #                         # print(f'u{i}, {user_age}, {user_region}: {date_watched[j][0]}')
-    #                         movie_id = []
-    #                         try: 
-    #                             curs.execute('SELECT movieid FROM watches WHERE userid = %s', (f'u{i}',))
-    #                             movie_id = curs.fetchall() # type: ignore
-    #                         except Exception as e: 
-    #                             conn.rollback
-    #                             print(f'❌ Error fetching movieid from database: {e}') 
-
-    #                         for k in range(0, len(movie_id)): 
-    #                             try: 
-    #                                 curs.execute('SELECT genreid FROM contains WHERE movieid = %s', movie_id[k])
-    #                                 genre_id = curs.fetchone() # type: ignore
-    #                             except Exception as e: 
-    #                                 conn.rollback
-    #                                 print(f'❌ Error fetching genreid from database: {e}') 
-
-    #                             if (genre_id): 
-    #                                 try: 
-    #                                     curs.execute('SELECT genrename FROM genre WHERE genreid = %s', genre_id)
-    #                                     genre_name = curs.fetchone()
-    #                                 except Exception as e: 
-    #                                     conn.rollback
-    #                                     print(f'❌ Error fetching genrename from database: {e}')
-
-    #                                 NA_dict[genre_name[0]] = NA_dict.get(genre_name[0], 0) + 1 # type: ignore
-    #                                 # print(f'u{i}, {user_region}, {movie_id[k][0]}, {genre_name[0]}: {NA_dict.get(genre_name[0], 0)}') # type: ignore
-    #     # Else if user is from Asia. 
-    #     elif (user_region == 'AS'): 
-    #         try: 
-    #             curs.execute('SELECT dob FROM users WHERE userid = %s', (f'u{i}',))
-    #             user_dob = curs.fetchone()[0] # type: ignore
-    #         except Exception as e: 
-    #             conn.rollback
-    #             print(f'❌ Error fetching dob from database: {e}') 
-
-    #         user_age = curr_date.year - user_dob.year 
-    #         if (user_dob.month > curr_date.month): 
-    #             user_age -= 1
-    #         elif (user_dob.month == curr_date.month and user_dob.day > curr_date.day): 
-    #             user_age -= 1
-
-    #         # Make sure the user is above the age of 45. If so, get date time watched for when they watched a movie. 
-    #         if (user_age > 45): 
-    #             try: 
-    #                 curs.execute('SELECT datetimewatched FROM watches WHERE userid = %s', (f'u{i}',))
-    #                 date_watched = curs.fetchall() # type: ignore
-    #             except Exception as e: 
-    #                 conn.rollback
-    #                 print(f'❌ Error fetching datetimewatched from database: {e}') 
-
-    #             # If they have a valid date time, as in they watched a movie and it was between the fall and winter seasons. 
-    #             if (date_watched): 
-    #                 for j in range(0, len(date_watched)): 
-    #                     # Get genre of movie to gather analytics. 
-    #                     if ((date_watched[j][0].month >= 1 and date_watched[j][0].month <= 2) or 
-    #                         (date_watched[j][0].month >= 9 and date_watched[j][0].month <= 12)): 
-    #                         # print(f'u{i}, {user_age}, {user_region}: {date_watched[j][0]}')
-    #                         movie_id = []
-    #                         try: 
-    #                             curs.execute('SELECT movieid FROM watches WHERE userid = %s', (f'u{i}',))
-    #                             movie_id = curs.fetchall() # type: ignore
-    #                         except Exception as e: 
-    #                             conn.rollback
-    #                             print(f'❌ Error fetching movieid from database: {e}') 
-
-    #                         for k in range(0, len(movie_id)): 
-    #                             try: 
-    #                                 curs.execute('SELECT genreid FROM contains WHERE movieid = %s', movie_id[k])
-    #                                 genre_id = curs.fetchone() # type: ignore
-    #                             except Exception as e: 
-    #                                 conn.rollback
-    #                                 print(f'❌ Error fetching genreid from database: {e}') 
-
-    #                             if (genre_id): 
-    #                                 try: 
-    #                                     curs.execute('SELECT genrename FROM genre WHERE genreid = %s', genre_id)
-    #                                     genre_name = curs.fetchone()
-    #                                 except Exception as e: 
-    #                                     conn.rollback
-    #                                     print(f'❌ Error fetching genrename from database: {e}')
-
-    #                                 AS_dict[genre_name[0]] = AS_dict.get(genre_name[0], 0) + 1 # type: ignore
-                                    # print(f'u{i}, {user_region}, {movie_id[k][0]}, {genre_name[0]}: {AS_dict.get(genre_name[0], 0)}') # type: ignore
-    
     print('✅ Printing analytics..........................[3/3]')
 
     print(f'NA Analytics: ')
@@ -414,8 +257,8 @@ def main():
 
             #DB work here....
             # modify_database(curs, conn)
-            fetch_simple(curs, conn) 
-            # fetch_complex(curs, conn)
+            # fetch_simple(curs, conn) 
+            fetch_complex(curs, conn)
 
             conn.close()
         print("Database connection closed.")
