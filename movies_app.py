@@ -5,12 +5,13 @@ from movies.auth import (
 from movies.user import (
     follow,
     unfollow,
-    view_profile, 
     view_followed,
     view_followers,
+    view_profile, 
     view_top_20_movies_among_users,
-    view_profile
+    recommend_movies,
 )
+
 from movies.movie import (
     watch_movie,
     watch_collection,
@@ -28,7 +29,6 @@ from movies.collection import (
     view_collections,
     create_collection,
     rename_collection,
-    total_collections
 )
 
 def main(curs, conn):
@@ -149,7 +149,9 @@ def main(curs, conn):
                 elif command == "view profile":
                     print()
                     view_profile(user_session, curs, conn)
-
+                elif command == "view movie rec":
+                    print()
+                    recommend_movies(user_session, curs, conn)
                 elif command == "help": 
                     help()
 
@@ -182,5 +184,6 @@ TOP MOVIES
 view top 20 (last 90 days) - view top 20 most popular movies in the last 90 days
 view top 20 (among users) - view the top 20 most popular movies among users followed by the current user
 view top 5 new releases - view the top 5 new releases of the month (calendar month)
+view movie rec - view recommended movies to watch to based on your play history (e.g. genre, cast member, rating) and the play history of similar users
 """
     print(help_msg)
