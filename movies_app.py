@@ -5,6 +5,7 @@ from movies.auth import (
 from movies.user import (
     follow,
     unfollow,
+    view_profile, 
     view_followed,
     view_followers,
     view_top_20_movies_among_users
@@ -112,32 +113,42 @@ def main(curs, conn):
                 elif command == "rename collection":
                     print()
                     rename_collection(user_session, curs, conn)
+
                 elif command == "total collections":
                     print()
                     total_collections(user_session, curs, conn)
+
                 elif command == "view followed":
                     print()
                     view_followed(user_session, curs, conn)
+
                 elif command == "view followers":
                     print()
                     view_followers(user_session, curs, conn)
+
                 elif command == "view profile": 
                     print() 
+                    view_profile(user_session, curs, conn)
 
                 elif command == "view top 10 movies":
                     print()
                     view_top_10(user_session, curs, conn)
+
                 elif command == "view top 20 (last 90 days)":
                     print()
                     view_top_20_last_90_days(curs, conn)
+
                 elif command == "view top 20 (among users)":
                     print()
                     view_top_20_movies_among_users(user_session, curs, conn)
+
                 elif command == "view top 5 new releases":
                     print()
                     view_top_5_new_releases(curs, conn)
+
                 elif command == "help": 
                     help()
+
                 else:
                     print("Invalid command")
                     help()

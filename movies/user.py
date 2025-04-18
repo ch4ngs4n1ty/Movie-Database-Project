@@ -1,3 +1,5 @@
+from collection import total_collections
+
 def follow(user_session, curs, conn):
     """
     Allows the user to follow another user.  
@@ -117,6 +119,11 @@ def unfollow(user_session, curs, conn):
         
         print("Error unfollowing user")
         conn.rollback()
+
+def view_profile(user_session, curs, conn): 
+    total_collections(user_session, curs, conn)
+    view_followers(user_session, curs, conn)
+    view_followed(user_session, curs, conn)
 
 def view_followed(user_session, curs, conn):
     """
