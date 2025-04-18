@@ -398,5 +398,13 @@ def rename_collection(user_session, curs, conn):
         conn.rollback()
 
 def total_collections(user_session, curs, conn):
+    curs.execute("""
+        SELECT COUNT(*) as count 
+        FROM users u
+        JOIN collection c ON u.userid = c.userid
+        WHERE u.userid = %s
+    """, (user_session["userId"],))
+    num_of_collections = curs.fetchone()
+
+    print(f'You have {num_of_collections[0]} collections.')
     
-    print("you have x number of collections")

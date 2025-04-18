@@ -212,5 +212,3 @@ def view_top_20_movies_among_users(user_session, curs, conn):
         print(f"Error viewing top 20 most popular movies among users followed by the current user: {e}")
 
         conn.rollback()
-
-

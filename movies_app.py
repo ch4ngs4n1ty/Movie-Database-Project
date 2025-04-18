@@ -44,6 +44,7 @@ def main(curs, conn):
             command = input("Would you like to login or create an account?\n" + 
                             "login - log into an account\n" +
                             "create account - create an account\n")
+            command = command.strip()
             if command == "create account":
                 create_account(user_session, curs, conn)
 
@@ -54,7 +55,7 @@ def main(curs, conn):
 
             while user_session["loggedIn"]:
                 print()
-                command = input("Enter a command:\n").strip()
+                command = input("Enter a command: (Enter 'help' to see commands) \n").strip()
 
                 if command == "logout":
                     user_session["loggedIn"] = False
@@ -132,6 +133,8 @@ def main(curs, conn):
                 elif command == "view top 5 new releases":
                     print()
                     view_top_5_new_releases(curs, conn)
+                elif command == "help": 
+                    help()
                 else:
                     print("Invalid command")
                     help()
