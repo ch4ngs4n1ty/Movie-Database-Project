@@ -229,35 +229,197 @@ def recommend_movies(user_session, curs, conn):
         print("2. Cast Member")
         print("3. Star Rating")
 
-        sort_by = input("Select (1 - 4): ").strip()
+        rec_by = input("Select (1 - 3): ").strip()
 
         rec_options = {
 
-            "1": "g.genrename",
-            "2": "LOWER(CONCAT(mp.firstname, ' ', mp.lastname))",  
+            "1": "LOWER(g.genrename)",
+            "2": "WHERE LOWER(CONCAT(mp.firstname, ' ', mp.lastname))",  
             "3": "sr.starrating",   
         }
 
-        query = f"""
-            SELECT
-                m.title as movie_name
-                COUNT(w.movieid) AS watch_count
-                FROM movies
+        if rec_by:
 
+            if rec_by == "1":
 
+                genre_option = rec_options[rec_by]
+
+                genre = input("Select Genre: ")
+
+                from_clause = """
+                    FROM users u
+                    LEFT JOIN watches w ON w.userid = u.userid
+                    LEFT JOIN movie m ON w.movieid = m.movieid
+                    LEFT JOIN contains c ON m.movieid = c.movieid
+                    LEFT JOIN genre g ON c.genreid = g.genreid
+                    """
+
+                query = f"""
+                    SELECT
+                        m.title as movie_name
+                        COUNT(w.movieid) AS watch_count
+                        STRING_AGG(DISTINCT g.genrename, ', ') AS genres, 
+
+                        {from_clause}
+        
+                        WHERE 
+                            {genre_option} LIKE %s
+                            u.userid = %s
+
+                            GROUP BY m.title
+                            ORDER BY watch_count DESC
+                        """
+                curs.execute(query, (genre, user_id))
+
+                rec_genre_list = curs.fetchall()
+
+                i = 0
+
+                for movie in rec_genre_list:
+
+                    i += 1
+
+                    movie_name = movie[0]
+                    watch_count = movie[1]
+                    genre_name = movie[2]
+
+                    print(f"{genre_name} Recommendation List\n")
+                    print(f"Movie {i}: {movie_name} with watch count of {watch_count}.\n")
+
+            elif rec_by == 2:
+
+                cast_option = rec_options[rec_by]
+
+                member = input("Select Cast Member: ")
+
+                from_clause = """
+                    FROM users u
+                    LEFT JOIN watches w ON w.userid = u.userid
+                    LEFT JOIN movie m ON w.movieid = m.movieid
+                    LEFT JOIN starsin s ON m.movieid = s.movieid
+                    LEFT JOIN moviepeople mp ON s.personid = mp.personid 
+                    """
+
+                query = f"""
+                    SELECT
+                        m.title as movie_name
+                        COUNT(w.movieid) AS watch_count
+                        STRING_AGG(DISTINCT CONCAT(mp.firstname, ' ', mp.lastname), ', ') AS cast_member,
+
+                        {from_clause}
+
+                        WHERE 
+                            {cast_option} LIKE %s
+                            u.userid = %s
+
+                            GROUP by m.title 
+                            ORDER BY watch_count DESC
+                        """
+
+                curs.execute(query, (member, user_id))
+
+                rec_member_list = curs.fetchall()
+
+                i = 0
+
+                for movie in rec_member_list:
+
+                    i += 1
+
+                    movie_name = movie[0]
+                    watch_count = movie[1]
+                    member_name = movie[2]
+
+                    print(f"{member_name} Recommendation\n")
+                    print(f"Movie {i}: {movie_name} with watch count of {watch_count}.\n")
+
+            elif rec_by == 3:
+
+                mpaa_option = rec_options[rec_by]
+
+                mpaa = input("Select MPAA Rating: ")
+
+                from_clause = """
+                    FROM users u
+                    LEFT JOIN watches w ON w.userid = u.userid
+                    LEFT JOIN movie m ON w.movieid = m.movieid
+                    """
+
+                query = f"""
+                    SELECT
+                        m.title as movie_name
+                        COUNT(w.movieid) AS watch_count
+                        m.mpaarating AS mpaa_rating,
+                        
+                        {from_clause}
+
+                        WHERE 
+                            {mpaa_option} LIKE %s
+                            u.userid = %s
+
+                            GROUP by m.title 
+                            ORDER BY watch_count DESC
+                        """
                 
-                """
+                curs.execute(query, (mpaa, user_id))
 
+                rec_mpaa_list = curs.fetchall()
+
+                i = 0
+
+                for movie in rec_mpaa_list:
+
+                    i += 1
+
+                    movie_name = movie[0]
+                    watch_count = movie[1]
+                    mpaa_name = movie[2]
+
+                    print(f"{mpaa_name} Recommendation\n")
+                    print(f"Movie {i}: {movie_name} with watch count of {watch_count}.\n")
+
+            else:
+
+                print("Viewing Similar User Play History\n")
+
+                from_clause = """
+                    FROM follows f
+                    LEFT JOIN watches w ON w.userid = f.follower
+                    LEFT JOIN movie m ON w.movieid = m.movieid
+                    """
+
+                query = f"""
+                    SELECT
+                        m.title AS movie_name
+                        COUNT(w.movieid) AS watch_count
+                        f.follower AS follower
+
+                        
+                        {from_clause}
+
+                        WHERE 
+                            
+                            f.followee = %s
+
+                            GROUP by m.title 
+                            ORDER BY watch_count DESC
+
+                        """
+                
+                curs.execute(query, (user_id,))
+
+                rec_user_list = curs.fetchall()
+
+                for movie in rec_user_list:
+
+                    movie_name = movie[0]
+                    watch_count = movie[1]
+                    follower_name = movie[2]
+
+                    print(f"Similar User: {follower_name}, Movie {i}: {movie_name} with watch count of {watch_count}.\n")
 
     except Exception as e:
 
-
-
         conn.rollback()
-
-
-
-
-
 
 

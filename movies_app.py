@@ -7,7 +7,8 @@ from movies.user import (
     unfollow,
     view_followed,
     view_followers,
-    view_top_20_movies_among_users
+    view_top_20_movies_among_users,
+    recommend_movies
 )
 from movies.movie import (
     watch_movie,
@@ -132,6 +133,9 @@ def main(curs, conn):
                 elif command == "view top 5 new releases":
                     print()
                     view_top_5_new_releases(curs, conn)
+                elif command == "view movie recommendations":
+                    print()
+                    recommend_movies(user_session, curs, conn)
                 else:
                     print("Invalid command")
                     help()
@@ -163,5 +167,6 @@ view top 10 - view top 10 movies based on rating, plays, or both
 view top 20 (last 90 days) - view top 20 most popular movies in the last 90 days
 view top 20 (among users) - view the top 20 most popular movies among users followed by the current user
 view top 5 new releases - view the top 5 new releases of the month (calendar month)
+view movie recommendations - view recommended movies to watch to based on your play history (e.g. genre, cast member, rating) and the play history of similar users
 """
     print(help_msg)
