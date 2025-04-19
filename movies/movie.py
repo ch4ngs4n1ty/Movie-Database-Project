@@ -362,7 +362,6 @@ def view_top_10(user_session, curs, conn):
     if search_by not in ["1", "2", "3"]:
         print("Invalid option")
         return
-    print("DEBUG - user_session:", user_session)
     userid = user_session.get("userId")
 
     if search_by == "1":
