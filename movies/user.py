@@ -281,18 +281,19 @@ def recommend_movies(user_session, curs, conn):
                         {from_clause}
         
                         WHERE 
-                            {genre_option} LIKE %s
-                            AND u.userid = %s
+                            {genre_option} ILIKE %s
+                            AND m.movieid NOT IN (
+                            SELECT movieid FROM watches WHERE userid = %s
+                            )
 
                         GROUP BY m.title
                         ORDER BY watch_count DESC
+                        LIMIT 5;
 
                         """
                 curs.execute(query, (genre, user_id))
 
                 rec_genre_list = curs.fetchall()
-
-                print(rec_genre_list)
 
                 i = 0
 
@@ -330,17 +331,19 @@ def recommend_movies(user_session, curs, conn):
                         {from_clause}
 
                         WHERE 
-                            {cast_option} LIKE %s
-                            AND u.userid = %s
+                            {cast_option} ILIKE %s
+                            AND m.movieid NOT IN (
+                            SELECT movieid FROM watches WHERE userid = %s
+                            )
 
-                            GROUP by m.title 
-                            ORDER BY watch_count DESC
+                        GROUP by m.title 
+                        ORDER BY watch_count DESC
+                        LIMIT 5;
                         """
 
                 curs.execute(query, (member, user_id))
 
                 rec_member_list = curs.fetchall()
-                print(rec_member_list)
 
                 i = 0
 
@@ -376,11 +379,12 @@ def recommend_movies(user_session, curs, conn):
                         {from_clause}
 
                         WHERE 
-                            {mpaa_option} LIKE %s
+                            {mpaa_option} ILIKE %s
                             AND u.userid = %s
 
-                            GROUP by m.title, m.mpaarating
-                            ORDER BY watch_count DESC
+                        GROUP by m.title, m.mpaarating
+                        ORDER BY watch_count DESC
+                        LIMIT 5;
                         """
                 
                 curs.execute(query, (mpaa, user_id))
@@ -416,15 +420,17 @@ def recommend_movies(user_session, curs, conn):
                     COUNT(w.movieid) AS watch_count,
                     f.follower AS follower
 
-                        
                     {from_clause}
 
                     WHERE 
-                            
                         f.followee = %s
+                        AND m.movieid NOT IN (
+                        SELECT movieid FROM watches WHERE userid = %s
+                        )
 
                     GROUP by m.title, f.follower
                     ORDER BY watch_count DESC
+                    LIMIT 5;
 
                     """
                 
@@ -432,7 +438,6 @@ def recommend_movies(user_session, curs, conn):
 
             rec_user_list = curs.fetchall()
 
-            print(rec_user_list)
 
             i = 0
 
