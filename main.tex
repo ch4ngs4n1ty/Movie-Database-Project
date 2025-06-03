@@ -1,0 +1,520 @@
+\documentclass[12pt]{article}
+\usepackage[utf8]{inputenc}
+\usepackage{graphicx}
+\usepackage{float}
+\usepackage{caption}
+\usepackage{xcolor}
+\usepackage{hyperref}
+
+\title{Movies}
+
+\date{\today} 
+
+\author{The "N"s \\
+        Evan He: 388009043\\
+        Alvin Liu: 395004880\\
+        Aiden Chen: 385006091\\
+        Ethan Chang: 393008816\\
+        Ashwin Jagadeesh: 388009677\\
+        }
+
+\begin{document}
+
+\maketitle
+
+\section{Introduction}
+% Use two or three paragraphs to present your approach for the project. Your approach must include your primary and backup domains and a description of your database based application.\\
+
+For our project, we have a movie database-based application that allows us to keep track of movies, their cast members, ratings, and watch counts for multiple users. We also enable users to track their watch history, rate movies, and manage personal collections. In addition, they can follow other users. We use a relational database to store and manage user data, movie details, genres, collections, and release information. The database will incorporate key relationships, such as user interactions like rating movies and movie production. Our application allows for easy querying, data retrieval, and analytics. 
+
+Our approach to this project was first listing down all the required information for the project and then expand on that afterwards. We first got all of the important entities like Movie, User, and MoviePeople. Then, we added all of the straightforward, easy-to-think-of attributes like name and ID. Then after we had all of them down, we thought about the not-as-obvious ones like the multi-valued attribute types like Collection's Total Duration of Movies and other weird cases like our Release Platforms. Next, we connected our entity types using relationship types, figuring out how the entities are related to each other. Finally, we thought about the cardinalities of all the relationships and how they would affect our database if they were implemented. \\
+
+\section{Design}
+\subsection{Conceptual Model}
+% Use this section to include your EER diagram and describe any consideration made during its design.\\
+
+{
+    \captionsetup[figure]{labelformat=empty}
+    \centering
+    \includegraphics[width=0.8\textwidth]{Images/EER_Images/Movie_People.png} \\
+    \captionof{figure}{\textbf{Movie People Entity}}
+    {
+        To create the relationship between movies and the people participating in the movie, we made a single entity that represents both actors and directors and gave it a relationship with movies to represent either directors or actors who work on the movie. As such, this relationship is called "WorksOn". The relationship has an attribute type called "Role", which represents the role a single movie person could have, being either a director or an actor. The attribute type is on the relationship because a movie person can work on multiple movies, so having the attribute on the relationship would connect that person's role with that movie. Every movie person would have a name, first and last, and an ID to uniquely identify them. This relationship is many to many because a movie can have multiple directors and actors, and an actor or director can work on multiple movies. 
+    }
+    \vspace{10pt} 
+    \includegraphics[width=1.0\textwidth]{Images/EER_Images/Movie_Entity.png} \\
+    \captionof{figure}{\textbf{Movie Entity}}
+    {
+        The Movie entity includes MovieID, Title, Duration, MPAARating, Revenue, and ReleaseDate, all of which represent an individual film. MovieID serves as the primary key, uniquely identifying each movie. On the left side of the EER Model, the relationship type "Created" represents movies created by studios. We used a 0..N cardinality because studios can create multiple movies, but some studios may not have any movies. The "PartOf" relationship type also uses 0..N cardinality, allowing an individual movie to be part of multiple collections or none at all. The "ReleasedOn" relationship connects to the ReleasePlatform, which can be either Theater, Streaming, or DVD, ensuring that each movie is associated with one platform and does not have a NULL value. At the top of the EER Model, we have 1..M cardinality for WorksOn, as we need at least one person working on a given movie.
+    }
+    \vspace{10pt} 
+    \includegraphics[width=1.0\textwidth]{Images/EER_Images/Studio_Entity.png} \\
+    \captionof{figure}{\textbf{Studio Entity}}
+    {
+        The studio entity has the relationship "Created" to showcase that studios help create the movie. The movie to studios has an 1:N relationship because each movie must at least one studio that creates but can have more than 1. Conversely, the studios to movies is 0:N because each studio can produce 0 or more movies. Each studio is uniquely identified with a studio ID and we also store the name and location of the studio. 
+    }
+    \vspace{10pt} 
+    \includegraphics[width=1.0\textwidth]{Images/EER_Images/Release_Platform.png} \\
+    \captionof{figure}{\textbf{Release Platform Entity}}
+    {
+        PlatformID is a unique constraint to avoid duplicates and match with MovieIDs. The ReleasePlatform entity has total participation with disjoint specialization, meaning every release platform a movie is released on must be one of three platforms: Theater, Streaming, or DVD. Total participation makes sure every movie that is released has a platform, so it can't be NULL. Both Theater and Streaming include the Location attribute to represent where they are released and Streaming has a StreamingName attribute. 
+    }
+    \vspace{10pt} 
+    \includegraphics[width=1.0\textwidth]{Images/EER_Images/Collection.png} \\
+    \captionof{figure}{\textbf{Collection Entity}}
+    {
+        The Collection entity type has a unique attribute called "Collection Name" to prevent duplicates, making sure that each collection has a different name representing a group of movies for a user. The Total Duration of Movies is a derived attribute calculated from the number of movies in the collection and the individual lengths of each movie. We used 0..N cardinality for the "Part Of" relationship type because a given movie can be part of 0 or more collections. We also used 0..N cardinality for the "Own" relationship type since users can have 0 collections or as many as they want.
+    }
+    \vspace{10pt} 
+    \includegraphics[width=1.0\textwidth]{Images/EER_Images/Genre_Entity.png} \\
+    \captionof{figure}{\textbf{Genre Entity}}
+    {
+        The Genre entity type represents the genre of each movie. We use the "Genre Name" attribute to categorize movies, which can include options like Horror, Comedy, Drama, etc. GenreID serves as a unique constraint to prevent duplication and will be used to match with MovieID. We used 1..N cardinality with the "Contains" relationship type because each movie must have at least one genre or more.
+    }
+    \vspace{10pt} 
+    \includegraphics[width=1.0\textwidth]{Images/EER_Images/User_Entity.png} 
+    \captionof{figure}{\textbf{User Entity}} 
+    {
+        This entity represents individuals who watch movies and create collections. The User entity contains attributes such as Region, Gender, DOB (Date of Birth), Password, Number of Collections, Creation Date, and Follower Count. We have a primary key called Username to prevent duplication and ensure that users cannot have the same username when interacting with movies.
+
+        The Email attribute is considered a multi-valued attribute type because a user can have multiple email addresses linked to their account. Since the Username is the primary key, it can be used to uniquely identify each user without depending on the email for uniqueness. Similarly, the Access Date/Time is also a multi-valued attribute type because a user can have multiple access dates and times recorded. It relies on the Username primary key for unique identification as well.
+    
+        We have a derived attribute called Age, which can be calculated from the DOB (Date of Birth). Additionally, Last Access Date is derived from the Access Date/Time to track the most recent date and time a user accessed the system.
+
+        We created collections, so they are part of the "Own" relationship type for collections. We used 1..1 cardinality to allow each user to have only one collection at a time, meaning no other user can own the same collection.
+
+        For the "Watches" and "Rates" relationship types, we have 0..N cardinality to allow any number of users to watch or rate as many movies as they want. To save watching data, we included a multi-valued attribute called DateTimeWatched which will hold all instances when a user watches a movie. This information is stored as date and time for when the user starts watching a movie. For ratings, we have used Star Rating as the official rating when a user rates a movie.
+
+        Finally, we included the "Follows" relationship type, which has 0..N cardinality for both users and followers. This means a user can have multiple followers or no followers at all.
+    }
+}
+
+\subsection{Reduction to tables}
+% Include in this section the reduction of your EER diagram to tables and explain how each entity type and relationship type have been converted.
+% \\
+
+Each entity type and relationship type have been converted using the procedure outlined in Chapter 6.3 of the textbook. For each entity type, a relation is created with its simple attribute types directly mapped. Entity types with the composite attribute type would be decomposed into its own table. The primary keys will be underlined, while the foreign keys will be italicized.\\
+
+From our diagram, many entity types were related in a binary many-to-many relationship type way, like Studios create Movies, MoviePeople works on Movie, User watches Movie, etc. To map this relationship type to a relational model, the binary many-to-many relationship would have its own relation, where the primary keys of this relation will be a combination of foreign keys, which refer to the primary keys to the entity types to which it is connected. As an example, a studio that creates multiple movies and a movie that can be created by multiple studios collaborating together was mapped to a relational model by taking the StudioID (primary key of Studios entity type) and the MovieID (primary key of Movie entity type) and placing both of these primary keys in the Relation Created. Any attribute types that exist in that specific relation would then also be mapped in the table.\\
+
+Our diagram includes one many to many unary relationship type, which is on the topic of followers and followee. A person can follow multiple people, and it is possible to have multiple people follow that same person, hence the many-to-many relationship type. To map this, we created a relation to represent the Follows relationship type with its foreign keys as Follower and Followee with the constraint that a Follower and Followee both refer to their unique username in the User entity type which contains the primary key of username. \\
+
+A one-to-many relationship type is utilized to connect a User with its collection of movies. To map this to a relational model, a relationship was created between the two participating entities (User and Collection). On the many side (Collection), we would create a relation including a foreign key of the primary key of the User relation.\\
+
+Specialization is also utilized in our diagram, where a single movie can have multiple different release platforms, and a release platform can have several different movies released on it. Because our specialization involves total participation, we utilized option 3 from Chapter 6.4.1 of the textbook, which is to store all superclass and subclass information in one relation. ReleasePlatform would be a relation with the attributes (PlatformID, Location, StreamingName, Platform). Platform is the attribute that we added to indicate the exact subclass (due to the disjoint constraint). Location is an attribute of both the subclasses theater and streaming, with Streaming having its own attribute called StreamingName.
+
+{
+    \captionsetup[figure]{labelformat=empty}
+    \centering
+    \includegraphics[width=1.25\textwidth]{Images/Reduction_To_Tables_Images/Reduction_To_Tables.png}
+    \captionof{figure}{Reduction to Tables Relations}
+}
+
+\subsection{Data Requirements/Constraints}
+% Use this section to list all data domains and constraints that cannot be captured in your EER diagram, but must be enforced by the database system. For example, there may be attribute types with a restricted domain, you must list those attribute types here and their domains. Similarly, attribute types with restrictions like uniqueness or required must be also listed here.\\
+% \\
+\textbf{Constraints:}
+\begin{itemize}
+    \item Usernames must be unique/NOT NULL. 
+    \item Collection names are unique/NOT NULL.
+    \item Studio names are unique/NOT NULL.
+    \item User date of birth must be after January 1, 1900. 
+    \item User email needs @ symbol, domain name, and top level domain. Email is NOT NULL.
+    \item Role of MoviePeople entity is either Actor (Cast member) or Director.
+    \item All dates will have data type of type DATE.
+    \item All date times will have data type of type DATETIME.
+    \item MPAA Rating can only be value of G, PG, PG-13, R, X, NR.
+    \item The region of a user is the continent they are in: North America (NA), South America (SA), Europe (EU), Asia (AS), Africa (AF), Antarctica (AN), Australia (AU).
+    \item Star rating can only be an INT value of 1, 2, 3, 4, 5.
+    \item Location in Studios entity is a city.
+    \item Location in ReleasePlatform entity is a country.
+    \item Movie duration is in minutes.
+\end{itemize}
+
+\textbf{Required attribute types:}
+\begin{itemize}
+    \item Title, Duration, Release Date, MovieID, MPAA Rating in Movie entity.
+    \item GenreID, GenreName in Genre entity.
+    \item StudioID, StudioName, Location in Studios entity.
+    \item Name, Username, Password, Email, Location, Date of Birth in User entity. 
+    \item CollectionName in Collections entity.
+    \item Name, Role, PersonID in MoviePeople entity.
+    \item StreamingName is required for subclass Streaming.
+\end{itemize}
+    % Miscellaneous:
+% \begin{itemize}
+%     \item 
+% \end{itemize}\\
+%dob required for specific pg or adult rated movies, email is required for searching up people
+
+\subsection{Sample Instance Data}
+% Use this section to include sample of entities for every entity type in your EER diagram. Include also sample of relationships for every relationship type. For example, assume you have an entity type \emph{Course} in your EER diagram with the attribute types \emph{ID} and \emph{name}. A sample of a \emph{Course} entity can be \emph{CSCI320, Principles of Data Management}.\\
+
+Include 5 samples for every entity type and relationship type.
+
+{
+    \setcounter{figure}{0}
+    \centering
+    \includegraphics[width=0.8\textwidth]{Images/Sample_Instance_Data_Images/Studio_Tables.png} \\ 
+    \captionof{figure}{Studio Relation Tables}
+    \vspace{10pt}
+    \includegraphics[width=1.0\textwidth]{Images/Sample_Instance_Data_Images/User_Tables.png} \\ 
+    \captionof{figure}{User Relation Tables}
+    \vspace{10pt}
+    \includegraphics[width=1.2\textwidth]{Images/Sample_Instance_Data_Images/Movie_Tables.png} \\ 
+    \captionof{figure}{Movie Relation Tables}
+    \vspace{10pt}
+    \includegraphics[width=0.7\textwidth]{Images/Sample_Instance_Data_Images/Collection_Tables.png} \\ 
+    \captionof{figure}{Collection Relation Tables}
+    \vspace{10pt}
+    \includegraphics[width=0.5\textwidth]{Images/Sample_Instance_Data_Images/Genre_Tables.png} \\ 
+    \captionof{figure}{Genre Relation Tables}
+    \vspace{10pt}
+    \includegraphics[width=1.0\textwidth]{Images/Sample_Instance_Data_Images/Release_Platform.png} \\ 
+    \captionof{figure}{Release Platform Relation Tables}
+}
+
+\section{Implementation}
+\subsection{Current Design Phase}
+Updated EER for phase 2:\\
+\includegraphics[width=1.0\textwidth]{Images/EER_Images/Phase2_EER.png} \\
+
+Updated Reduction to tables for phase 2:\\
+\includegraphics[width=1.0\textwidth]{Images/Reduction_To_Tables_Images/Phase2_Reduction.png} \\
+
+% Use this section to describe the overall implementation of your database. Include samples of SQL statements to create the tables (DDL statements) and a description of the ETL process, including examples of the SQL insert statements used to populate each table initially.
+
+% Also, include a sample of the SQL insert statements used in your application program to insert new data in the database. Finally, add an appendix of all the SQL statements created in your application during Phase 4 and a description of the indexes created to boost the performance of your application.
+
+\subsection{Descriptions}
+
+\noindent {\large SQL statements for table creation:}
+\begin{itemize}
+    \item CREATE TABLE accessdates (userid VARCHAR(5), accessdate DATE, PRIMARY KEY (userid, accessdate), FOREIGN KEY (userid) REFERENCES users(userid));
+    \item CREATE TABLE genre (genreid VARCHAR(5), genrename VARCHAR(30), PRIMARY KEY (genreid));
+\end{itemize}
+
+
+\noindent {\large ETL process \& Overall Implementation:}
+
+Movie data was imported from a dataset found on \href{https://www.kaggle.com/datasets/shivamb/netflix-shows}{Kaggle}, but information other than that was generated via the Python library faker and random. The Kaggle dataset contained information/attributes about movies that matches to that on our EER but was missing attributes like revenue so we utilized python's faker library as well as the random library to generate missing data. That was the only data source we used found online and all other data was custom created via the faker and random library. Tables like users, starsin, studios (and many others) were generated through the faker library in python and inserted using INSERT statements. Only tables movie and moviepeople were with populated real date.
+
+The following contains 5 sample insert statements used to populate the database.\\
+
+\noindent {\large How data was loaded SQL statements:}
+\begin{itemize}
+    \item INSERT INTO studios VALUES (\%s, \%s, \%s)
+    \item INSERT INTO created VALUES (\%s, \%s)
+    \item INSERT INTO rates (movieid, userid, starrating) VALUES (\%s, \%s, \%s)
+    \item INSERT INTO movie (revenue) VALUES (\%s)
+    \item INSERT INTO moviepeople VALUES (\%s, \%s, \%s)\\
+\end{itemize}
+ 
+\noindent {\large How data was loaded SQL statements example:}
+\begin{itemize}
+    \item INSERT INTO studios VALUES ('s1', 'Mcbride PLC Studio', 'Erinland')
+    \item INSERT INTO collection VALUES ('c1', 'outside', 'u1')
+    \item INSERT INTO rates (movieid, userid, starrating) VALUES ('m4199', 'u4', '3')
+    \item INSERT INTO movie (revenue) VALUES ('260000000')
+    \item INSERT INTO moviepeople VALUES ('p623', 'James', 'McAvoy')\\
+\end{itemize}
+
+\noindent {\large SQL queries used by our application to populate the database:}
+\begin{itemize}
+    \item INSERT INTO users(userid, username, firstname, lastname, region, dob, password, creationdate) VALUES (\%s, \%s, \%s, \%s, \%s, \%s, \%s, \%s)
+    \item INSERT INTO accessdates(userid, accessdate) VALUES (\%s, \%s)
+    \item INSERT INTO follows VALUES (\%s, \%s)
+    \item INSERT INTO watches(userid, movieid, datetimewatched) VALUES (\%s, \%s, \%s)
+    \item INSERT INTO watches(userid, movieid, datetimewatched) VALUES (\%s, \%s, \%s)
+    \item INSERT INTO rates VALUES (\%s, \%s, \%s)
+    \item INSERT INTO PartOf(MovieID, CollectionID) VALUES (\%s, \%s)
+    \item INSERT INTO Collection(collectionid, collectionname, userid) VALUES (\%s, \%s, \%s)
+\end{itemize}
+
+% \noindent {\large SQL queries used by our application to retrieve data from database:}
+% \begin{itemize}
+%     \item 
+% \end{itemize}
+
+\noindent {\large Phase 3 SQL Statements: }
+\begin{itemize}
+    \item View top 10: \begin{verbatim}
+SELECT 
+    m.movieid,
+    m.title,
+    m.duration,
+    m.mpaarating,
+    ROUND(MAX(r.starrating), 1) AS user_rating,
+    COUNT(w.userid) AS watch_count,
+    STRING_AGG(DISTINCT CONCAT(mp.firstname, ' ', mp.lastname), ', ')
+    AS cast_members,
+    STRING_AGG(DISTINCT CONCAT(dp.firstname, ' ', dp.lastname), ', ')
+    AS director_name,
+    STRING_AGG(DISTINCT s.studioname, ', ') AS studios,
+    STRING_AGG(DISTINCT g.genrename, ', ') AS genres,
+    EXTRACT(YEAR FROM ro.releasedate) AS release_year
+FROM
+    Movie m
+    LEFT JOIN starsin si ON m.movieid = si.movieid
+    LEFT JOIN moviepeople mp ON si.personid = mp.personid
+    LEFT JOIN directs dir ON m.movieid = dir.movieid
+    LEFT JOIN moviepeople dp ON dir.personid = dp.personid
+    {rating_join}
+    LEFT JOIN created c ON m.movieid = c.movieid
+    LEFT JOIN studios s ON c.studioid = s.studioid
+    LEFT JOIN contains co ON m.movieid = co.movieid
+    LEFT JOIN genre g ON co.genreid = g.genreid
+    LEFT JOIN releasedon ro ON m.movieid = ro.movieid
+    {watch_join}
+    {where_clause}
+GROUP BY
+    m.movieid, m.title, m.duration, m.mpaarating, ro.releasedate
+{order_clause}
+LIMIT 10
+\end{verbatim}
+    \item Total collections: \begin{verbatim}
+SELECT COUNT(*) as count 
+FROM collection
+WHERE userid = %s
+\end{verbatim}
+    \item Number of users following: \begin{verbatim}
+SELECT COUNT(*) FROM follows
+WHERE follower = %s 
+\end{verbatim}
+    \item Number of users this user is following: \begin{verbatim}
+SELECT COUNT(*) FROM follows
+WHERE followee = %s 
+\end{verbatim}
+    \item View top 20 movies in last 90 days: \begin{verbatim}
+SELECT 
+m.title AS movie_name,
+COUNT(w.movieid) as watch_count
+FROM movie m
+JOIN watches w on m.movieid = w.movieid
+WHERE w.datetimewatched >= %s
+GROUP BY m.movieid, m.title
+ORDER BY watch_count DESC
+LIMIT 20;
+\end{verbatim} 
+    \item View top 20 among users: \begin{verbatim}
+SELECT
+m.title AS movie_name,
+COUNT(w.movieid) AS watch_count
+FROM follows f
+JOIN watches w ON f.followee = w.userid
+JOIN movie m ON w.movieid = m.movieid
+WHERE f.follower = %s
+GROUP BY m.movieid, m.title
+ORDER BY watch_count DESC
+LIMIT 20;
+\end{verbatim}
+    \item View top 5 new releases: \begin{verbatim}
+SELECT
+m.title AS movie_name,
+COUNT(w.movieid) as watch_count
+FROM movie m
+JOIN watches w on m.movieid = w.movieid
+JOIN releasedon r on m.movieid = r.movieid
+WHERE EXTRACT(YEAR FROM r.releasedate) = %s
+AND EXTRACT(MONTH FROM r.releasedate) = %s
+GROUP BY m.movieid, m.title
+ORDER BY watch_count DESC
+LIMIT 5;
+\end{verbatim}
+    \item Recommend movies: \begin{verbatim}
+SELECT
+m.title as movie_name,
+COUNT(w.movieid) AS watch_count,
+STRING_AGG(DISTINCT g.genrename, ', ') AS genres
+FROM users u
+LEFT JOIN watches w ON w.userid = u.userid
+LEFT JOIN movie m ON w.movieid = m.movieid
+LEFT JOIN contains c ON m.movieid = c.movieid
+LEFT JOIN genre g ON c.genreid = g.genreid
+WHERE 
+{genre_option} LIKE %s
+AND u.userid = %s
+GROUP BY m.title
+ORDER BY watch_count DESC
+
+SELECT
+m.title as movie_name,
+COUNT(w.movieid) AS watch_count,
+STRING_AGG(DISTINCT CONCAT(mp.firstname, ' ', mp.lastname), ', ') 
+AS cast_member FROM users u
+LEFT JOIN watches w ON w.userid = u.userid
+LEFT JOIN movie m ON w.movieid = m.movieid
+LEFT JOIN starsin s ON m.movieid = s.movieid
+LEFT JOIN moviepeople mp ON s.personid = mp.personid 
+WHERE 
+{cast_option} LIKE %s
+AND u.userid = %s
+GROUP by m.title 
+ORDER BY watch_count DESC
+
+SELECT
+m.title as movie_name,
+COUNT(w.movieid) AS watch_count,
+m.mpaarating AS mpaa_rating
+FROM users u
+LEFT JOIN watches w ON w.userid = u.userid
+LEFT JOIN movie m ON w.movieid = m.movieid
+WHERE 
+{mpaa_option} LIKE %s
+AND u.userid = %s
+GROUP by m.title, m.mpaarating
+ORDER BY watch_count DESC
+\end{verbatim}
+\end{itemize}
+
+\section{Data Analysis}
+\subsection{Hypothesis}
+% Use this section to state the objectives of your data analysis; what are the observations you are expecting to find. Note that your final
+% observations may end up differing from your proposal, that is also a valid result.\\
+
+The objective of our data analysis is to determine whether our hypothesis is correct and to explore any trends and insights in our data. Since our data was randomly aggregated, we are not expecting our hypothesis to be correct or substantiated.\\
+\\
+\noindent{Simple hypothesis: }
+
+Millennials (between the ages of 29-44) prefer to watch romantic movies over other movies.\\
+\\
+\noindent{ Complex hypothesis:}
+
+People living in North America over the age of 45 are more likely to watch thriller and horror movies during the fall and winter seasons than their counterparts living in Asia
+
+\subsection{Data Preprocessing}
+% Use this section to describe the preprocessing steps you have performed to prepare the data for analytics. Preprocessing steps may include: data cleaning (e.g., filling missing values, fixing outliers), formatting the data (e.g., resolving issues like inconsistent abbreviations, multiples date format in the data), combining or splitting fields, and adding new information (data enrichness).
+
+To prepare the data for analytics, we manually resolved improper formatting. Sometimes, there were issues with different date formats that we had to manually resolve. More importantly, we also added new information to enrich our database. Ever since we had added salting to the database, the password stored in our database is encrypted, meaning that the only person who knows about the password to the account would be the person themselves. To access these existing accounts, we had to create new ones because the database provides no useful information about the password itself.\\
+
+% Explain how the data was extracted from the database for the analysis; if you used complex queries or views, or both.
+To extract the data, we prepared and executed several SQL statements. For our simple hypothesis, we used the following complex SQL query. The objective of this query is to figure out how many times each genre was watched by users between 29 and 44 years.\\
+
+\begin{verbatim}
+    SELECT g.genrename, COUNT(*) AS count
+    FROM users u
+    JOIN watches w ON u.userid = w.userid
+    JOIN contains c ON w.movieid = c.movieid
+    JOIN genre g ON c.genreid = g.genreid
+    WHERE 
+    AGE(CURRENT\_DATE, u.dob) BETWEEN INTERVAL '29 years' AND INTERVAL '44 years'
+    GROUP BY g.genrename
+    ORDER BY count DESC;
+\end{verbatim}
+\\
+
+For our complex hypothesis, a combination of 2 complex SQL statements were used. Both queries are similar in that they both were used to count the number of times a genre was watched by users. The only difference between the 2 queries is the geographical location that was used to collect user data. The sample query written below has a geographical location of North America whereas the second SQL statement would have its geographical location be set to Asia like so: u.region = 'AS'\\
+\begin{verbatim}
+    SELECT g.genrename, COUNT(*) AS count
+    FROM users u
+    JOIN watches w ON u.userid = w.userid
+    JOIN contains c ON w.movieid = c.movieid
+    JOIN genre g ON c.genreid = g.genreid
+    WHERE
+    AGE(CURRENT\_DATE, u.dob) \textgreater  INTERVAL '45 years'
+    AND u.region = 'NA'
+    AND (EXTRACT(MONTH FROM w.datetimewatched) BETWEEN 1 AND 3 
+    OR EXTRACT(MONTH FROM w.datetimewatched) BETWEEN 9 AND 12)
+    GROUP BY g.genrename
+    ORDER BY count DESC;
+\end{verbatim} 
+
+\subsection{Data Analytics \& Visualization}
+%Use this section to explain the process/techniques used to analyze the data, use data visualization to present the results, and explain them.\\
+
+For both the simple and complex hypotheses, we kept the data as it was for the most part, since both hypotheses are quantitative. We didn't use any special techniques to analyze the data, and we just used Microsoft Excel to create a graph. We took the data we got straight from the SQL queries, which were the counts of users who fit the conditions of their respective queries. For the simple hypothesis, we got the count of all movies watched by users between the ages of 29 and 44 and grouped by genre so we could analyze which genres they preferred to watch. Then, we just put the data into an Excel spreadsheet and created the bar graph as seen in Fig 1.
+
+We didn't use indices because we felt they were unnecessary in boosting our application program’s performance. Our application didn't have any delays in producing our desired outputs, and since we only had at most around 5000 entries in our most populated table, we thought that using indices wasn't necessary.\\
+
+{
+    \captionsetup[figure]{labelformat=empty}
+    \centering
+    \includegraphics[width=1.0\textwidth]{Images/Data_Analysis_Graphs/DB Analysis Poster_1.png} \\
+    \captionof{figure}{\textbf{Figure 7: Simple Hypothesis Graph}}
+    \vspace{15pt} 
+}
+
+Since our simple hypothesis was 'Millennials (between the ages of 29-44) prefer to watch romantic movies over other movies', we just needed to look at the genre with the highest watch count which is actually Dramas which proves our hypothesis wrong. What is interesting is that not only are romantic movies not the genre Millennials prefer to watch, but they actually watched no romantic movies at all.
+
+For our complex hypothesis, we also just used the data we got from our SQL queries, but altered it a little bit to focus the data on what we wanted to compare. We got the most watched genres for people over the age of 45 in just the fall and winter seasons for both NA and AS from the query and then took only the count for Thrillers and Horror. Since our complex hypothesis was 'People living in North America over the age of 45 are more likely to watch thriller and horror movies during the fall and winter seasons than their counterparts living in Asia', we just needed to look at the Thriller and Horror movie watch counts. Then, we just inputted the data of Thrillers and Horror movies for both NA and AS and put it into a bar graph as seen in Fig 2.
+\\
+
+{
+    \captionsetup[figure]{labelformat=empty}
+    \centering
+    \includegraphics[width=1.0\textwidth]{Images/Data_Analysis_Graphs/DB Analysis Poster_2.png} \\
+    \captionof{figure}{\textbf{Figure 8: Complex Hypothesis Graph}}
+    \vspace{15pt} 
+}
+
+As seen in Fig 2, users in AS watched more Thrillers and Horror movies than their counterparts in NA. So not only is our hypothesis wrong, but the opposite is actually true. People living in Asia over the age of 45 are more likely to watch thriller and horror movies during the fall and winter seasons than their counterparts living in North America.
+
+\subsection{Conclusions}
+In conclusion, both of our hypotheses have been found to be incorrect. For hypothesis 1, we needed to compare the movies genres Millennials watched, carefully paying attention to the romantic genre to compare it with the other ones. The results showed that Millennials don't seem to watch romantic movies at all, since our database analysis results showed that Millennials watched 0 romantic movies. In addition, millennials enjoyed watching drama movies the most, with comedy movies coming in second and action movies after that. Thus, our results did not support hypothesis 1. For hypothesis 2,  we needed to compare the horror and thriller movie genres in NA compared to in AS for people over 45 years old and for the winter and fall seasons only. Our results showed that for NA users, horror and thriller were only watched a total of 9 times, while for AS users, they were watched for 18 times. The results show that AS users over 45 years old watch more horror and thriller movies during the fall and winter season than NA users in the same situation do. This, however, does not support out hypothesis 2. As such, both our hypotheses were proven incorrect. 
+
+\section{Lessons Learned}
+% Use this section to describe the issues you faced during the project and how you overcame them. Also, describe what you learned during this effort; this section, like the others, plays a critical component in determining your final grade.\\
+
+We faced many difficulties in working on this project this semester. This was a challenging course that required a lot of contribution from each person in the group. One issue is coordinating code changes/reviews. Since our group contains 5 people, there was a lot of codebase movement. At the beginning, we weren't coordinating very well and as a result had a lot of merge conflicts that took a lot of time to resolve. We resolved this by communicating thoroughly via Discord to assign a person a specific duty whereby they would follow the best git practices to minimize code conflicts. We would initially assign 2-3 members to work on the codebase, and if help was needed, we would pull down changes from the remote repository and suggest changes that would be merged into the feature branch. On top of this, we also split up our code into multiple files that were dedicated to different functionalities, like a user file or a movie file, which helped us coordinate who would work on which part of the application. This helped us learn how to organize our code better and also how to succeed in a team coding project.\\
+
+We also faced the issue of interpreting the document differently, where each person would understand pieces of instructions differently. We had to resolve this by communicating with the professors in our class to ensure that this project met their requirements. We learned how to effectively communicate with each other, understand each other's schedules, and make amends to ensure effective collaborative efforts to accomplish tasks.
+
+In addition, we struggled with phase 1 of the project with developing an EER diagram that would allow us to accommodate all the features that we wanted to implement in the application. We had to make sure that all the relationships were consistent with the guidelines and weren't too restrictive in the data we wanted to keep in our database. We overcame this by breaking down every relationship into small parts. First, we created the basic tables for users and movies. Then we added each necessary relationship one at a time, making sure the cardinalities were appropriate for the entities involved. We also made sure to use a lot of primary and foreign keys to prevent data duplication and keep the data tables consistent. We learned how to be meticulous with our EER diagram and look at the bigger picture to understand everything we needed to implement in the future.
+
+% {\bf The next subsection is meant to provide you with some help in
+%   dealing with figures, tables and references, as these are sometimes
+%   hard for folks new to \LaTeX. Your figures and tables
+%   may be distributed all over your paper (not just here), as appropriate for your paper.
+
+%   Please delete the following subsection before you make any submissions!}
+
+% \subsection{Tables, Figures, and Citations/References}
+
+% Tables, figures, and references in technical
+% documents need to be presented correctly. As many students
+% are not familiar with using these objects, here is a quick
+% guide extracted from the ACM style guide.
+
+% \begin{table}
+% \centering
+% \caption{Feelings about Issues}
+% \label{SAMPLE TABLE}
+% \begin{tabular}{|l|r|l|} \hline
+% Flavor&Percentage&Comments\\ \hline
+% Issue 1 &  10\% & Loved it a lot\\ \hline
+% Issue 2 &  20\% & Disliked it immensely\\ \hline
+% Issue 3 &  30\% & Didn't care one bit\\ \hline
+% Issue 4 &  40\% & Duh?\\ \hline
+% \end{tabular}
+% \end{table}
+
+
+% First, note that figures in the report must be original, that is,
+% created by the student: please do not cut-and-paste figures from any
+% other paper or report you have read or website. Second, if you do need to include figures,
+% they should be handled as demonstrated here. State that
+% Figure~\ref{SAMPLE FIGURE} is a simple illustration used in the ACM
+% Style sample document. Never refer to the figure below (or above)
+% because figures may be placed by \LaTeX{} at any appropriate location
+% that can change when you recompile your source $.tex$
+% file. Incidentally, in proper technical writing (for reasons beyond
+% the scope of this discussion), table captions are above the table and
+% figure captions are below the figure. So the truly junk information
+% about flavors is shown in Table~\ref{SAMPLE TABLE}.
+
+% \begin{figure}[htb]
+% \begin{center}
+% \includegraphics[width=1.5in]{images/fly.jpg}
+% \caption{A sample black \& white graphic (JPG).}
+% \label{SAMPLE FIGURE}
+% \end{center}
+% \end{figure}
+
+\section{Resources}
+Include in this section the resources you have used in your project beyond the normal code development such as data sets or data analytic tools (i.e. Weka, R).
+
+Dataset used:
+https://www.kaggle.com/datasets/shivamb/netflix-shows
+Data Analytics:
+Microsoft Excel
+\end{document}
